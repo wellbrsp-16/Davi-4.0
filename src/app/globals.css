@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+@theme {
+  --color-sonic-blue: #1E40AF;
+  --color-sonic-sky: #0284C7;
+  --color-ring-gold: #EAB308;
+  --color-shoes-red: #EF4444;
+  --color-dark-charcoal: #121212;
+  --color-tails-orange: #F97316;
+  --color-knuckles-red: #DC2626;
+  --color-amy-pink: #EC4899;
+
+  --animate-spin-slow: spin 6s linear infinite;
+  --animate-float: float 3s ease-in-out infinite;
+  --animate-ring-pulse: ringPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-dash: dash 1s ease-out;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  @keyframes ringPulse {
+    0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.7); }
+    50% { transform: scale(1.05); opacity: 0.9; box-shadow: 0 0 0 10px rgba(234, 179, 8, 0); }
+  }
+  @keyframes dash {
+    0% { transform: translateX(-100%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+}
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom premium styling classes */
+.sonic-gradient-primary {
+  background: linear-gradient(135deg, #1E40AF 0%, #0284C7 100%);
+}
+
+.sonic-gradient-gold {
+  background: linear-gradient(135deg, #EAB308 0%, #CA8A04 100%);
+}
+
+.sonic-gradient-red {
+  background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%);
+}
+
+.sonic-gradient-dark {
+  background: linear-gradient(135deg, #1F2937 0%, #111827 100%);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.dark .glass-card {
+  background: rgba(18, 18, 18, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Green Hill zone inspired subtle checkered pattern */
+.green-hill-pattern {
+  background-color: #f8fafc;
+  background-image: radial-gradient(rgba(30, 64, 175, 0.04) 1px, transparent 0),
+                    radial-gradient(rgba(30, 64, 175, 0.04) 1px, transparent 0);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+}
