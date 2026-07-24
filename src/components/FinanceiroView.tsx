@@ -22,7 +22,9 @@ import {
   ArrowRight,
   TrendingUp,
   PieChart,
-  Lock
+  Lock,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { FinanceiroItem, PlanejamentoItem, Usuario } from '@/utils/supabase';
 
@@ -309,6 +311,7 @@ export default function FinanceiroView({
   const [realParcelas, setRealParcelas] = useState<number>(1);
   const [realObs, setRealObs] = useState('');
   const [realComprovantes, setRealComprovantes] = useState<string[]>([]);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
   // ── State: Receipt Modal ──
   const [receiptModalItem, setReceiptModalItem] = useState<FinanceiroItem | null>(null);
@@ -1263,23 +1266,140 @@ export default function FinanceiroView({
               <div className="text-center py-10 text-slate-400 bg-white rounded-3xl border border-slate-100 p-4">
                 <p className="font-bold text-sm">Nenhum gasto cadastrado</p>
               </div>
-            ) : (
-              sortedFinanceiro.map((item) => (
-                <MobileFinanceiroCard
-                  key={item.id}
-                  item={item}
-                  canEdit={canEditReal(item)}
-                  onEdit={() => openEditRealForm(item)}
-                  onDelete={() => {
-                    if (confirm(`Excluir gasto ${item.item}?`)) onDeleteFinanceiro(item.id);
-                  }}
-                  onToggleStatus={() => toggleFullPayment(item)}
-                  onOpenReceipts={() => setReceiptModalItem(item)}
-                  formatCurrency={formatCurrency}
-                  formatQuantityDisplay={formatQuantityDisplay}
-                />
-              ))
-            )}
+            ) : (() => {
+              // Grouping logic for mobile split items
+              interface GroupedItem {
+                isGroup: boolean;
+                groupKey: string;
+                baseName: string;
+                totalParcelas: number;
+                items: FinanceiroItem[];
+                singleItem?: FinanceiroItem;
+              }
+
+              const groupedMobileItems: GroupedItem[] = [];
+              const processedGroups = new Set<string>();
+
+              sortedFinanceiro.forEach(f => {
+                if (f.total_parcelas && f.total_parcelas > 1) {
+                  const baseName = f.item.replace(/\s\(\d+\/\d+\)$/, '').trim();
+                  const groupKey = `${baseName}_${f.total_parcelas}_${f.pagante}`;
+                  
+                  if (!processedGroups.has(groupKey)) {
+                    processedGroups.add(groupKey);
+                    const groupInstallments = sortedFinanceiro.filter(item => {
+                      const itemBase = item.item.replace(/\s\(\d+\/\d+\)$/, '').trim();
+                      return itemBase === baseName && item.total_parcelas === f.total_parcelas && item.pagante === f.pagante;
+                    });
+                    
+                    groupedMobileItems.push({
+                      isGroup: true,
+                      groupKey,
+                      baseName,
+                      totalParcelas: f.total_parcelas,
+                      items: groupInstallments
+                    });
+                  }
+                } else {
+                  groupedMobileItems.push({
+                    isGroup: false,
+                    groupKey: f.id,
+                    baseName: f.item,
+                    totalParcelas: 1,
+                    items: [f],
+                    singleItem: f
+                  });
+                }
+              });
+
+              return groupedMobileItems.map((g) => {
+                if (!g.isGroup && g.singleItem) {
+                  return (
+                    <MobileFinanceiroCard
+                      key={g.singleItem.id}
+                      item={g.singleItem}
+                      canEdit={canEditReal(g.singleItem)}
+                      onEdit={() => openEditRealForm(g.singleItem!)}
+                      onDelete={() => {
+                        if (confirm(`Excluir gasto ${g.singleItem!.item}?`)) onDeleteFinanceiro(g.singleItem!.id);
+                      }}
+                      onToggleStatus={() => toggleFullPayment(g.singleItem!)}
+                      onOpenReceipts={() => setReceiptModalItem(g.singleItem!)}
+                      formatCurrency={formatCurrency}
+                      formatQuantityDisplay={formatQuantityDisplay}
+                    />
+                  );
+                }
+
+                // Render installment group header
+                const totalVal = g.items.reduce((acc, curr) => acc + Number(curr.valor_total), 0);
+                const totalPaid = g.items.reduce((acc, curr) => acc + Number(curr.valor_pago), 0);
+                const isAllPaid = totalPaid >= totalVal;
+                const paidCount = g.items.filter(curr => curr.valor_pago >= curr.valor_total).length;
+                const isExpanded = expandedGroups[g.groupKey];
+
+                return (
+                  <div key={g.groupKey} className="space-y-2">
+                    {/* Header Card */}
+                    <div 
+                      onClick={() => setExpandedGroups(prev => ({ ...prev, [g.groupKey]: !prev[g.groupKey] }))}
+                      className="glass-card bg-white border border-slate-200/80 p-4 rounded-3xl flex items-center justify-between shadow-sm active:scale-[0.99] transition-all cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="bg-indigo-50 text-indigo-600 p-2.5 rounded-2xl shrink-0">
+                          <CreditCard className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-black text-slate-800 tracking-tight leading-snug">
+                            {g.baseName}
+                          </h4>
+                          <span className="bg-indigo-50/80 text-indigo-700 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 mt-1">
+                            💳 {paidCount}/{g.items.length} pagas
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <span className="font-black text-slate-900 text-sm block">
+                            {formatCurrency(totalVal)}
+                          </span>
+                          <span className={`text-[10px] font-bold ${isAllPaid ? 'text-emerald-600' : 'text-rose-500'}`}>
+                            {isAllPaid ? 'Pago' : `Falta: ${formatCurrency(totalVal - totalPaid)}`}
+                          </span>
+                        </div>
+                        {isExpanded ? (
+                          <ChevronUp className="w-5 h-5 text-slate-400" />
+                        ) : (
+                          <ChevronDown className="w-5 h-5 text-slate-400" />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Expanded Installments List */}
+                    {isExpanded && (
+                      <div className="pl-3 ml-4 border-l-2 border-indigo-100 space-y-2.5 pt-1 pb-2">
+                        {g.items.map((subItem) => (
+                          <MobileFinanceiroCard
+                            key={subItem.id}
+                            item={subItem}
+                            canEdit={canEditReal(subItem)}
+                            onEdit={() => openEditRealForm(subItem)}
+                            onDelete={() => {
+                              if (confirm(`Excluir gasto ${subItem.item}?`)) onDeleteFinanceiro(subItem.id);
+                            }}
+                            onToggleStatus={() => toggleFullPayment(subItem)}
+                            onOpenReceipts={() => setReceiptModalItem(subItem)}
+                            formatCurrency={formatCurrency}
+                            formatQuantityDisplay={formatQuantityDisplay}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              });
+            })()}
           </div>
         </div>
       )}
