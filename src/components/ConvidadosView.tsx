@@ -837,7 +837,7 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
               placeholder="Buscar convidado..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none shadow-sm focus:border-sonic-blue"
+              className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-base md:text-sm font-semibold text-slate-700 focus:outline-none shadow-sm focus:border-sonic-blue"
             />
           </div>
 
@@ -848,7 +848,7 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
               <select
                 value={filterConfirmado}
                 onChange={(e) => setFilterConfirmado(e.target.value as 'todos' | 'confirmados' | 'pendentes')}
-                className="w-full pl-8 pr-6 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 focus:outline-none shadow-sm appearance-none cursor-pointer"
+                className="w-full pl-8 pr-6 py-3 bg-white border border-slate-200 rounded-2xl text-base md:text-xs font-bold text-slate-700 focus:outline-none shadow-sm appearance-none cursor-pointer"
               >
                 <option value="todos">Status</option>
                 <option value="confirmados">Confirmado</option>
@@ -863,7 +863,7 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
               <select
                 value={filterConvidadoPor}
                 onChange={(e) => setFilterConvidadoPor(e.target.value as 'todos' | 'Wellington' | 'Raissa')}
-                className="w-full pl-8 pr-6 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 focus:outline-none shadow-sm appearance-none cursor-pointer"
+                className="w-full pl-8 pr-6 py-3 bg-white border border-slate-200 rounded-2xl text-base md:text-xs font-bold text-slate-700 focus:outline-none shadow-sm appearance-none cursor-pointer"
               >
                 <option value="todos">Convidado por</option>
                 <option value="Wellington">Wellington</option>
@@ -879,7 +879,7 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
             <select
               value={sortField}
               onChange={(e) => handleSortChange(e.target.value as SortField)}
-              className="w-full pl-10 pr-8 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 focus:outline-none shadow-sm appearance-none cursor-pointer"
+              className="w-full pl-10 pr-8 py-3 bg-white border border-slate-200 rounded-2xl text-base md:text-xs font-bold text-slate-700 focus:outline-none shadow-sm appearance-none cursor-pointer"
             >
               <option value="nome">Ordenar: Nome</option>
               <option value="tipo">Ordenar: Tipo</option>

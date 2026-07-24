@@ -8,7 +8,7 @@ import FinanceiroView from '@/components/FinanceiroView';
 import ConfiguracaoView from '@/components/ConfiguracaoView';
 import LoginView from '@/components/LoginView';
 import ForcePasswordChangeView from '@/components/ForcePasswordChangeView';
-import { db, Convidado, FinanceiroItem, Usuario } from '@/utils/supabase';
+import { db, Convidado, FinanceiroItem, PlanejamentoItem, Usuario } from '@/utils/supabase';
 
 type Tab = 'dashboard' | 'convidados' | 'financeiro' | 'configuracao';
 
@@ -20,19 +20,22 @@ export default function HomePage() {
   const [config, setConfig] = useState({ nome_aniversariante: '', data_festa: '' });
   const [convidados, setConvidados] = useState<Convidado[]>([]);
   const [financeiro, setFinanceiro] = useState<FinanceiroItem[]>([]);
+  const [planejamento, setPlanejamento] = useState<PlanejamentoItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Load / Reload Data
   const loadAllData = useCallback(async () => {
     try {
-      const [configData, convidadosData, financeiroData] = await Promise.all([
+      const [configData, convidadosData, financeiroData, planejamentoData] = await Promise.all([
         db.getConfig(),
         db.getConvidados(),
-        db.getFinanceiro()
+        db.getFinanceiro(),
+        db.getPlanejamento()
       ]);
       setConfig(configData);
       setConvidados(convidadosData);
       setFinanceiro(financeiroData);
+      setPlanejamento(planejamentoData);
     } catch (err) {
       console.error('Erro ao recarregar dados:', err);
     }
@@ -80,10 +83,34 @@ export default function HomePage() {
     setConvidados(prev => prev.filter(c => c.id !== id));
   };
 
+  // Planejamento actions
+  const handleAddPlanejamento = async (item: Omit<PlanejamentoItem, 'id' | 'criado_em'>) => {
+    const added = await db.addPlanejamento(item);
+    if (added) setPlanejamento(prev => [added, ...prev]);
+  };
+
+  const handleUpdatePlanejamento = async (id: string, updates: Partial<PlanejamentoItem>) => {
+    const updated = await db.updatePlanejamento(id, updates);
+    if (updated) {
+      setPlanejamento(prev => prev.map(p => p.id === id ? updated : p));
+    }
+  };
+
+  const handleDeletePlanejamento = async (id: string) => {
+    await db.deletePlanejamento(id);
+    setPlanejamento(prev => prev.filter(p => p.id !== id));
+  };
+
   // Finance actions
-  const handleAddFinanceiro = async (item: Omit<FinanceiroItem, 'id' | 'valor_pendente' | 'criado_em'>) => {
-    const added = await db.addFinanceiro(item);
-    if (added) setFinanceiro(prev => [added, ...prev]);
+  const handleAddFinanceiro = async (item: Omit<FinanceiroItem, 'id' | 'valor_pendente' | 'criado_em'> | Omit<FinanceiroItem, 'id' | 'valor_pendente' | 'criado_em'>[]) => {
+    if (Array.isArray(item)) {
+      const addedList = await Promise.all(item.map(i => db.addFinanceiro(i)));
+      const valid = addedList.filter(Boolean);
+      setFinanceiro(prev => [...valid, ...prev]);
+    } else {
+      const added = await db.addFinanceiro(item);
+      if (added) setFinanceiro(prev => [added, ...prev]);
+    }
   };
 
   const handleUpdateFinanceiro = async (id: string, updates: Partial<FinanceiroItem>) => {
@@ -260,9 +287,13 @@ export default function HomePage() {
           {activeTab === 'financeiro' && currentUser?.login?.toLowerCase() === 'admin' && (
             <FinanceiroView 
               financeiro={financeiro}
-              onAdd={handleAddFinanceiro}
-              onUpdate={handleUpdateFinanceiro}
-              onDelete={handleDeleteFinanceiro}
+              planejamento={planejamento}
+              onAddFinanceiro={handleAddFinanceiro}
+              onUpdateFinanceiro={handleUpdateFinanceiro}
+              onDeleteFinanceiro={handleDeleteFinanceiro}
+              onAddPlanejamento={handleAddPlanejamento}
+              onUpdatePlanejamento={handleUpdatePlanejamento}
+              onDeletePlanejamento={handleDeletePlanejamento}
             />
           )}
 

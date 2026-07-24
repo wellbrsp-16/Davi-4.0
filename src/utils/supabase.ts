@@ -25,15 +25,33 @@ export type Convidado = {
   criado_em: string;
 };
 
+export type PlanejamentoItem = {
+  id: string;
+  item: string;
+  unidade_medida: 'unid' | 'kg' | 'fixo';
+  quantidade?: number;
+  preco_unitario?: number;
+  valor_estimado: number;
+  observacao?: string;
+  criado_em: string;
+};
+
 export type FinanceiroItem = {
   id: string;
   data: string;
   item: string;
+  unidade_medida?: 'unid' | 'kg' | 'fixo';
+  quantidade?: number;
+  preco_unitario?: number;
   valor_total: number;
   valor_pago: number;
   valor_pendente: number;
   pagante: 'Wellington' | 'Raissa';
+  meio_pagamento?: 'Pix' | 'Cartão de Crédito' | 'Dinheiro' | 'Outro';
   observacao?: string;
+  parcela_atual?: number;
+  total_parcelas?: number;
+  comprovantes?: string[];
   comprovante_url?: string;
   criado_em: string;
 };
@@ -70,10 +88,10 @@ class MockSupabaseService {
   ];
 
   private initialFinanceiro: FinanceiroItem[] = [
-    { id: 'f1', data: '2026-07-15', item: 'Reserva do Espaço Green Hill', valor_total: 1500.00, valor_pago: 500.00, valor_pendente: 1000.00, pagante: 'Wellington', observacao: 'Sinal pago, restante na semana do evento', criado_em: new Date().toISOString() },
-    { id: 'f2', data: '2026-07-20', item: 'Decoração Temática Sonic & Amigos', valor_total: 2200.00, valor_pago: 2200.00, valor_pendente: 0.00, pagante: 'Raissa', observacao: 'Decoração premium inclusa mesa de bolo 3D', criado_em: new Date().toISOString() },
-    { id: 'f3', data: '2026-07-22', item: 'Bolo Cenográfico e Doces Personalizados', valor_total: 650.00, valor_pago: 300.00, valor_pendente: 350.00, pagante: 'Raissa', observacao: 'Doces com formato de argolas e esmeraldas do caos', criado_em: new Date().toISOString() },
-    { id: 'f4', data: '2026-07-23', item: 'Salgados Finos (1000 unidades)', valor_total: 800.00, valor_pago: 0.00, valor_pendente: 800.00, pagante: 'Wellington', observacao: 'Pagamento na entrega', criado_em: new Date().toISOString() }
+    { id: 'f1', data: '2026-07-15', item: 'Reserva do Espaço Green Hill', unidade_medida: 'fixo', valor_total: 1500.00, valor_pago: 500.00, valor_pendente: 1000.00, pagante: 'Wellington', parcela_atual: 1, total_parcelas: 3, observacao: 'Sinal pago (1/3), parcelante', comprovantes: ['/comprovantes/recibo_reserva.pdf', '/comprovantes/contrato.pdf'], criado_em: new Date().toISOString() },
+    { id: 'f2', data: '2026-07-20', item: 'Decoração Temática Sonic & Amigos', unidade_medida: 'fixo', valor_total: 2200.00, valor_pago: 2200.00, valor_pendente: 0.00, pagante: 'Raissa', parcela_atual: 1, total_parcelas: 1, observacao: 'Decoração premium inclusa mesa de bolo 3D', comprovantes: ['/comprovantes/recibo_decoracao.png'], criado_em: new Date().toISOString() },
+    { id: 'f3', data: '2026-07-22', item: 'Bolo Cenográfico e Doces', unidade_medida: 'unid', quantidade: 50, preco_unitario: 13, valor_total: 650.00, valor_pago: 300.00, valor_pendente: 350.00, pagante: 'Raissa', parcela_atual: 1, total_parcelas: 2, observacao: 'Doces com formato de argolas (50 unid)', comprovantes: ['/comprovantes/foto_bolo.jpg'], criado_em: new Date().toISOString() },
+    { id: 'f4', data: '2026-07-23', item: 'Churrasco e Carnes Nobres', unidade_medida: 'kg', quantidade: 10, preco_unitario: 80, valor_total: 800.00, valor_pago: 0.00, valor_pendente: 800.00, pagante: 'Wellington', parcela_atual: 1, total_parcelas: 1, observacao: 'Picanha e Maminha (10 kg)', comprovantes: [], criado_em: new Date().toISOString() }
   ];
 
   private getUsuariosList(): Usuario[] {
@@ -211,6 +229,49 @@ class MockSupabaseService {
       return list[index];
     }
     return null;
+  }
+
+  private initialPlanejamento: PlanejamentoItem[] = [
+    { id: 'p1', item: 'Aluguel do Espaço de Festas Green Hill', unidade_medida: 'fixo', valor_estimado: 1500.00, observacao: 'Orçamento estimado para o espaço com piscina', criado_em: new Date().toISOString() },
+    { id: 'p2', item: 'Decoração Temática Sonic & Amigos', unidade_medida: 'fixo', valor_estimado: 2200.00, observacao: 'Mesa principal + balões', criado_em: new Date().toISOString() },
+    { id: 'p3', item: 'Doces Personalizados', unidade_medida: 'unid', quantidade: 50, preco_unitario: 13, valor_estimado: 650.00, observacao: 'Docinhos em formato de anéis de ouro', criado_em: new Date().toISOString() },
+    { id: 'p4', item: 'Churrasco & Bebidas', unidade_medida: 'kg', quantidade: 15, preco_unitario: 60, valor_estimado: 900.00, observacao: 'Estimativa de carnes para o evento', criado_em: new Date().toISOString() }
+  ];
+
+  getPlanejamento() {
+    return this.getStorageItem('mn_planejamento', this.initialPlanejamento);
+  }
+
+  addPlanejamento(item: any) {
+    const list = this.getPlanejamento();
+    const newItem = {
+      ...item,
+      id: Math.random().toString(36).substring(2, 9),
+      valor_estimado: Number(item.valor_estimado),
+      criado_em: new Date().toISOString()
+    };
+    list.unshift(newItem);
+    this.setStorageItem('mn_planejamento', list);
+    return newItem;
+  }
+
+  updatePlanejamento(id: string, updates: any) {
+    const list = this.getPlanejamento();
+    const index = list.findIndex(p => p.id === id);
+    if (index !== -1) {
+      const merged = { ...list[index], ...updates };
+      merged.valor_estimado = Number(merged.valor_estimado);
+      list[index] = merged;
+      this.setStorageItem('mn_planejamento', list);
+      return list[index];
+    }
+    return null;
+  }
+
+  deletePlanejamento(id: string) {
+    let list = this.getPlanejamento();
+    list = list.filter(p => p.id !== id);
+    this.setStorageItem('mn_planejamento', list);
   }
 
   deleteFinanceiro(id: string) {
@@ -387,6 +448,55 @@ class DatabaseService {
       }
     }
     mockDb.deleteFinanceiro(id);
+  }
+
+  // Planejamento
+  async getPlanejamento() {
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase.from('planejamento').select('*').order('criado_em', { ascending: false });
+        if (!error && data) return data;
+      } catch (err) {
+        console.error('Supabase getPlanejamento error:', err);
+      }
+    }
+    return mockDb.getPlanejamento();
+  }
+
+  async addPlanejamento(item: any) {
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase.from('planejamento').insert(item).select().single();
+        if (!error && data) return data;
+      } catch (err) {
+        console.error('Supabase addPlanejamento error:', err);
+      }
+    }
+    return mockDb.addPlanejamento(item);
+  }
+
+  async updatePlanejamento(id: string, updates: any) {
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase.from('planejamento').update(updates).eq('id', id).select().single();
+        if (!error && data) return data;
+      } catch (err) {
+        console.error('Supabase updatePlanejamento error:', err);
+      }
+    }
+    return mockDb.updatePlanejamento(id, updates);
+  }
+
+  async deletePlanejamento(id: string) {
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('planejamento').delete().eq('id', id);
+        return;
+      } catch (err) {
+        console.error('Supabase deletePlanejamento error:', err);
+      }
+    }
+    mockDb.deletePlanejamento(id);
   }
 
   async loginUser(loginInput: string, passwordInput: string): Promise<Usuario | null> {

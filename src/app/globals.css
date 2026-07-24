@@ -80,3 +80,16 @@ body {
   background-size: 20px 20px;
   background-position: 0 0, 10px 10px;
 }
+
+/* Prevent auto-zoom on input focus in mobile browsers (iOS Safari) */
+@media screen and (max-width: 767px) {
+  input[type="text"],
+  input[type="password"],
+  input[type="number"],
+  input[type="email"],
+  input[type="search"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
