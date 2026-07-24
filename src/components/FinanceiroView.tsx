@@ -396,12 +396,11 @@ export default function FinanceiroView({
     const matchesSearch = f.item.toLowerCase().includes(search.toLowerCase()) ||
       (f.observacao && f.observacao.toLowerCase().includes(search.toLowerCase()));
     const matchesPagante = filterPagante === 'todos' ? true : f.pagante === filterPagante;
-    const matchesMeio = filterMeioPagamento === 'todos' ? true : f.meio_pagamento === filterMeioPagamento;
     const isPaid = f.valor_pago >= f.valor_total;
     const matchesStatus =
       filterStatus === 'todos' ? true :
       filterStatus === 'pago' ? isPaid : !isPaid;
-    return matchesSearch && matchesPagante && matchesMeio && matchesStatus;
+    return matchesSearch && matchesPagante && matchesStatus;
   });
 
   const sortedFinanceiro = [...filteredFinanceiro].sort((a, b) => {
@@ -957,45 +956,9 @@ export default function FinanceiroView({
       {subTab === 'reais' && (
         <div className="space-y-5 animate-dash">
 
-          {/* Gastos Reais Summary Dashboard */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="glass-card rounded-2xl p-4 border border-blue-100 bg-blue-50/40 shadow-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-wider text-blue-600">Total Efetivo Orçado</span>
-                <span className="p-1.5 bg-blue-100 text-blue-600 rounded-xl"><DollarSign className="w-4 h-4" /></span>
-              </div>
-              <div className="text-xl font-black text-blue-950 mt-1">{formatCurrency(totalRealOrcado)}</div>
-              <div className="text-[11px] text-slate-500 font-semibold mt-1">
-                Wellington: {formatCurrency(totalWellington)} · Raissa: {formatCurrency(totalRaissa)}
-              </div>
-            </div>
-
-            <div className="glass-card rounded-2xl p-4 border border-green-100 bg-green-50/40 shadow-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-wider text-green-600">Total Efetivo Pago</span>
-                <span className="p-1.5 bg-green-100 text-green-600 rounded-xl"><CheckCircle2 className="w-4 h-4" /></span>
-              </div>
-              <div className="text-xl font-black text-green-950 mt-1">{formatCurrency(totalRealPago)}</div>
-              <div className="text-[11px] text-slate-500 font-semibold mt-1">
-                Wellington: {formatCurrency(pagoWellington)} · Raissa: {formatCurrency(pagoRaissa)}
-              </div>
-            </div>
-
-            <div className="glass-card rounded-2xl p-4 border border-red-100 bg-red-50/40 shadow-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-wider text-red-600">Total Pendente</span>
-                <span className="p-1.5 bg-red-100 text-red-600 rounded-xl"><Clock className="w-4 h-4" /></span>
-              </div>
-              <div className="text-xl font-black text-red-950 mt-1">{formatCurrency(totalRealPendente)}</div>
-              <div className="text-[11px] text-slate-500 font-semibold mt-1">
-                A Pagar: {formatCurrency(totalRealOrcado - totalRealPago)}
-              </div>
-            </div>
-          </div>
-
-          {/* Search & Filter Toolbar */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white/50 p-3 rounded-3xl border border-slate-200/50 shadow-sm">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1">
+          {/* Search & Filter Toolbar - WEB */}
+          <div className="hidden md:flex flex-row items-center justify-between gap-3 bg-white/50 p-3 rounded-3xl border border-slate-200/50 shadow-sm">
+            <div className="flex flex-row items-center gap-2 flex-1">
               <div className="relative flex-1 max-w-xs">
                 <Search className="w-4 h-4 text-slate-400 absolute left-4 top-3.5 pointer-events-none" />
                 <input
@@ -1003,7 +966,7 @@ export default function FinanceiroView({
                   placeholder="Buscar gasto ou observação..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-2xl text-base md:text-xs font-semibold text-slate-700 focus:outline-none focus:border-sonic-blue shadow-sm"
+                  className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-2xl text-[11px] font-semibold text-slate-700 focus:outline-none focus:border-sonic-blue shadow-sm"
                 />
               </div>
 
@@ -1012,29 +975,13 @@ export default function FinanceiroView({
                 <select
                   value={filterPagante}
                   onChange={(e) => setFilterPagante(e.target.value as any)}
-                  className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-2xl text-base md:text-xs font-bold text-slate-700 focus:outline-none shadow-sm appearance-none cursor-pointer"
+                  className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-2xl text-[11px] font-bold text-slate-700 focus:outline-none shadow-sm appearance-none cursor-pointer"
                 >
                   <option value="todos">Todos Pagantes</option>
                   <option value="Wellington">Wellington</option>
                   <option value="Raissa">Raissa</option>
                 </select>
-                <span className="absolute right-3 top-3 text-[9px] text-slate-400 pointer-events-none">▼</span>
-              </div>
-
-              {/* Meio de Pagamento */}
-              <div className="relative">
-                <select
-                  value={filterMeioPagamento}
-                  onChange={(e) => setFilterMeioPagamento(e.target.value as any)}
-                  className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-2xl text-base md:text-xs font-bold text-slate-700 focus:outline-none shadow-sm appearance-none cursor-pointer"
-                >
-                  <option value="todos">Todos Meios de Pagamento</option>
-                  <option value="Pix">Pix</option>
-                  <option value="Cartão de Crédito">Cartão de Crédito</option>
-                  <option value="Dinheiro">Dinheiro</option>
-                  <option value="Outro">Outro</option>
-                </select>
-                <span className="absolute right-3 top-3 text-[9px] text-slate-400 pointer-events-none">▼</span>
+                <span className="absolute right-3 top-3.5 text-[8px] text-slate-400 pointer-events-none">▼</span>
               </div>
 
               {/* Status */}
@@ -1042,13 +989,13 @@ export default function FinanceiroView({
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value as any)}
-                  className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-2xl text-base md:text-xs font-bold text-slate-700 focus:outline-none shadow-sm appearance-none cursor-pointer"
+                  className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-2xl text-[11px] font-bold text-slate-700 focus:outline-none shadow-sm appearance-none cursor-pointer"
                 >
                   <option value="todos">Todos Status</option>
                   <option value="pago">Pago</option>
                   <option value="pendente">Pendente</option>
                 </select>
-                <span className="absolute right-3 top-3 text-[9px] text-slate-400 pointer-events-none">▼</span>
+                <span className="absolute right-3 top-3.5 text-[8px] text-slate-400 pointer-events-none">▼</span>
               </div>
             </div>
 
@@ -1059,6 +1006,68 @@ export default function FinanceiroView({
               <Plus className="w-4 h-4" />
               Novo Gasto Real
             </button>
+          </div>
+
+          {/* Search & Filter Toolbar - MOBILE (Sutil, Clean, modern segmented selectors) */}
+          <div className="md:hidden space-y-2.5 pb-1">
+            {/* Search */}
+            <div className="relative">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Buscar gasto..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-100/80 border border-transparent rounded-2xl text-xs font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-slate-200"
+              />
+            </div>
+
+            {/* Pill-like selectors */}
+            <div className="flex gap-2 text-[10px] font-extrabold tracking-tight overflow-x-auto no-scrollbar pb-1">
+              {/* Pagantes Pills */}
+              <div className="flex bg-slate-100 p-0.5 rounded-xl shrink-0">
+                <button 
+                  onClick={() => setFilterPagante('todos')} 
+                  className={`px-2.5 py-1.5 rounded-lg transition-all ${filterPagante === 'todos' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'}`}
+                >
+                  Todos
+                </button>
+                <button 
+                  onClick={() => setFilterPagante('Wellington')} 
+                  className={`px-2.5 py-1.5 rounded-lg transition-all ${filterPagante === 'Wellington' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-500'}`}
+                >
+                  Wellington
+                </button>
+                <button 
+                  onClick={() => setFilterPagante('Raissa')} 
+                  className={`px-2.5 py-1.5 rounded-lg transition-all ${filterPagante === 'Raissa' ? 'bg-pink-500 text-white shadow-sm' : 'text-slate-500'}`}
+                >
+                  Raissa
+                </button>
+              </div>
+
+              {/* Status Pills */}
+              <div className="flex bg-slate-100 p-0.5 rounded-xl shrink-0">
+                <button 
+                  onClick={() => setFilterStatus('todos')} 
+                  className={`px-2.5 py-1.5 rounded-lg transition-all ${filterStatus === 'todos' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'}`}
+                >
+                  Todos Status
+                </button>
+                <button 
+                  onClick={() => setFilterStatus('pago')} 
+                  className={`px-2.5 py-1.5 rounded-lg transition-all ${filterStatus === 'pago' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-500'}`}
+                >
+                  Pago
+                </button>
+                <button 
+                  onClick={() => setFilterStatus('pendente')} 
+                  className={`px-2.5 py-1.5 rounded-lg transition-all ${filterStatus === 'pendente' ? 'bg-rose-500 text-white shadow-sm' : 'text-slate-500'}`}
+                >
+                  Pendente
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Gastos Reais Desktop Grid */}
