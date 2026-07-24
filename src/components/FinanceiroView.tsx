@@ -1008,8 +1008,8 @@ export default function FinanceiroView({
             </button>
           </div>
 
-          {/* Search & Filter Toolbar - MOBILE (Sutil, Clean, modern segmented selectors) */}
-          <div className="md:hidden space-y-2.5 pb-1">
+          {/* Search & Filter Toolbar - MOBILE (Sutil, Clean, non-exposed dropdowns, no scroll) */}
+          <div className="md:hidden space-y-2 pb-1">
             {/* Search */}
             <div className="relative">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
@@ -1022,50 +1022,34 @@ export default function FinanceiroView({
               />
             </div>
 
-            {/* Pill-like selectors */}
-            <div className="flex gap-2 text-[10px] font-extrabold tracking-tight overflow-x-auto no-scrollbar pb-1">
-              {/* Pagantes Pills */}
-              <div className="flex bg-slate-100 p-0.5 rounded-xl shrink-0">
-                <button 
-                  onClick={() => setFilterPagante('todos')} 
-                  className={`px-2.5 py-1.5 rounded-lg transition-all ${filterPagante === 'todos' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'}`}
+            {/* Compact Dropdowns side by side */}
+            <div className="grid grid-cols-2 gap-2">
+              {/* Pagante */}
+              <div className="relative">
+                <select
+                  value={filterPagante}
+                  onChange={(e) => setFilterPagante(e.target.value as any)}
+                  className="w-full pl-3 pr-8 py-2 bg-slate-100/80 border border-transparent rounded-2xl text-xs font-bold text-slate-600 focus:outline-none appearance-none cursor-pointer"
                 >
-                  Todos
-                </button>
-                <button 
-                  onClick={() => setFilterPagante('Wellington')} 
-                  className={`px-2.5 py-1.5 rounded-lg transition-all ${filterPagante === 'Wellington' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-500'}`}
-                >
-                  Wellington
-                </button>
-                <button 
-                  onClick={() => setFilterPagante('Raissa')} 
-                  className={`px-2.5 py-1.5 rounded-lg transition-all ${filterPagante === 'Raissa' ? 'bg-pink-500 text-white shadow-sm' : 'text-slate-500'}`}
-                >
-                  Raissa
-                </button>
+                  <option value="todos">Todos Pagantes</option>
+                  <option value="Wellington">Wellington</option>
+                  <option value="Raissa">Raissa</option>
+                </select>
+                <span className="absolute right-3 top-2.5 text-[8px] text-slate-400 pointer-events-none">▼</span>
               </div>
 
-              {/* Status Pills */}
-              <div className="flex bg-slate-100 p-0.5 rounded-xl shrink-0">
-                <button 
-                  onClick={() => setFilterStatus('todos')} 
-                  className={`px-2.5 py-1.5 rounded-lg transition-all ${filterStatus === 'todos' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'}`}
+              {/* Status */}
+              <div className="relative">
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value as any)}
+                  className="w-full pl-3 pr-8 py-2 bg-slate-100/80 border border-transparent rounded-2xl text-xs font-bold text-slate-600 focus:outline-none appearance-none cursor-pointer"
                 >
-                  Todos Status
-                </button>
-                <button 
-                  onClick={() => setFilterStatus('pago')} 
-                  className={`px-2.5 py-1.5 rounded-lg transition-all ${filterStatus === 'pago' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-500'}`}
-                >
-                  Pago
-                </button>
-                <button 
-                  onClick={() => setFilterStatus('pendente')} 
-                  className={`px-2.5 py-1.5 rounded-lg transition-all ${filterStatus === 'pendente' ? 'bg-rose-500 text-white shadow-sm' : 'text-slate-500'}`}
-                >
-                  Pendente
-                </button>
+                  <option value="todos">Todos Status</option>
+                  <option value="pago">Pago</option>
+                  <option value="pendente">Pendente</option>
+                </select>
+                <span className="absolute right-3 top-2.5 text-[8px] text-slate-400 pointer-events-none">▼</span>
               </div>
             </div>
           </div>
