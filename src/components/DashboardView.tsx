@@ -2,15 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { Calendar, Users, DollarSign, Clock, User, Baby, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
-import { Convidado, FinanceiroItem } from '@/utils/supabase';
+import { Convidado, FinanceiroItem, PlanejamentoItem } from '@/utils/supabase';
 
 interface DashboardProps {
   config: { nome_aniversariante: string; data_festa: string };
   convidados: Convidado[];
   financeiro: FinanceiroItem[];
+  planejamento: PlanejamentoItem[];
 }
 
-export default function DashboardView({ config, convidados, financeiro }: DashboardProps) {
+export default function DashboardView({ config, convidados, financeiro, planejamento }: DashboardProps) {
   const [timeLeft, setTimeLeft] = useState({ dias: 0, horas: 0, minutos: 0, segundos: 0 });
 
   // Calculate countdown
@@ -43,9 +44,24 @@ export default function DashboardView({ config, convidados, financeiro }: Dashbo
   const adultos = totalConvidados - criancas;
 
   // Calculations for finance
-  const totalOrcado = financeiro.reduce((acc, item) => acc + Number(item.valor_total), 0);
+  // Orçamento Previsto = soma dos valor_estimado do Planejamento
+  const totalOrcamentoPrevisto = planejamento.reduce((acc, item) => acc + Number(item.valor_estimado), 0);
+  // Gasto Real = soma do valor_total dos lançamentos reais
+  const totalGastoReal = financeiro.reduce((acc, item) => acc + Number(item.valor_total), 0);
+  // Total Pago = soma do valor_pago dos lançamentos reais
   const totalPago = financeiro.reduce((acc, item) => acc + Number(item.valor_pago), 0);
-  const totalPendente = totalOrcado - totalPago;
+  const totalPendente = totalGastoReal - totalPago;
+
+  // % do orçamento já comprometido com gastos reais
+  const pctUsado = totalOrcamentoPrevisto > 0 ? Math.min((totalGastoReal / totalOrcamentoPrevisto) * 100, 100) : 0;
+  const pctUsadoExato = totalOrcamentoPrevisto > 0 ? Math.round((totalGastoReal / totalOrcamentoPrevisto) * 100) : 0;
+
+  // % do gasto real já quitado
+  const pctPago = totalGastoReal > 0 ? Math.min((totalPago / totalGastoReal) * 100, 100) : 0;
+  const pctPagoExato = totalGastoReal > 0 ? Math.round((totalPago / totalGastoReal) * 100) : 0;
+
+  // Legacy alias para a seção Divisão
+  const totalOrcado = totalGastoReal;
 
   // Formatting currency
   const formatCurrency = (val: number) => {
@@ -177,7 +193,7 @@ export default function DashboardView({ config, convidados, financeiro }: Dashbo
 
             {/* Card Orçamento */}
             <div className="glass-card rounded-3xl p-5 shadow-lg border border-slate-200/60 bg-white/90 backdrop-blur-md flex flex-col justify-between space-y-4 hover:shadow-xl transition-all">
-              {/* Header: Label e Valor Total */}
+              {/* Header: Orçamento Previsto (Planejamento) */}
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-yellow-500 text-white rounded-2xl flex items-center justify-center shadow-md shadow-yellow-500/20">
@@ -185,31 +201,47 @@ export default function DashboardView({ config, convidados, financeiro }: Dashbo
                   </div>
                   <div>
                     <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Orçamento Previsto</span>
-                    <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-none mt-0.5 whitespace-nowrap">
-                      {formatCurrency(totalOrcado)}
+                    <div className="text-xl font-black text-slate-900 tracking-tight leading-none mt-0.5 whitespace-nowrap">
+                      {formatCurrency(totalOrcamentoPrevisto)}
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Barra de Progresso Financeiro */}
+              {/* Barra 1: % do orçamento já comprometido com gastos reais */}
               <div className="space-y-1">
-                <div className="flex justify-between text-[10px] font-bold text-slate-500 whitespace-nowrap">
-                  <span>Progresso de Pagamentos</span>
-                  <span className="text-emerald-600 font-extrabold">
-                    {totalOrcado > 0 ? Math.round((totalPago / totalOrcado) * 100) : 0}% pago
+                <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                  <span>Orçamento utilizado</span>
+                  <span className={`font-extrabold ${pctUsadoExato > 90 ? 'text-rose-600' : pctUsadoExato > 60 ? 'text-amber-600' : 'text-indigo-600'}`}>
+                    {formatCurrency(totalGastoReal)} · {pctUsadoExato}%
                   </span>
                 </div>
                 <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-emerald-500 to-green-400 rounded-full transition-all duration-500"
-                    style={{ width: `${totalOrcado > 0 ? (totalPago / totalOrcado) * 100 : 0}%` }}
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${pctUsadoExato > 90 ? 'bg-gradient-to-r from-rose-500 to-red-400' : pctUsadoExato > 60 ? 'bg-gradient-to-r from-amber-500 to-orange-400' : 'bg-gradient-to-r from-indigo-500 to-blue-400'}`}
+                    style={{ width: `${pctUsado}%` }}
                   />
                 </div>
               </div>
 
-              {/* Sub-métricas Financeiras sem truncamento com fonte ajustada */}
-              <div className="grid grid-cols-2 gap-1.5 pt-1 text-xs whitespace-nowrap">
+              {/* Barra 2: % do gasto real já pago */}
+              <div className="space-y-1">
+                <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                  <span>Gasto real pago</span>
+                  <span className="text-emerald-600 font-extrabold">
+                    {pctPagoExato}%
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
+                    style={{ width: `${pctPago}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Sub-métricas: Pago e Pendente */}
+              <div className="grid grid-cols-2 gap-1.5 text-xs whitespace-nowrap">
                 <div className="bg-emerald-50/90 border border-emerald-200/80 px-2 py-2 rounded-xl flex items-center justify-center gap-1 text-[10px] sm:text-[11px]" title="Total Pago">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                   <span className="font-black text-emerald-900">{formatCurrency(totalPago)}</span>

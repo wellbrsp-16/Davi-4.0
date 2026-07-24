@@ -270,7 +270,8 @@ export default function HomePage() {
             <DashboardView 
               config={config} 
               convidados={convidados} 
-              financeiro={financeiro} 
+              financeiro={financeiro}
+              planejamento={planejamento}
             />
           )}
 
