@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Home, Users, DollarSign, Settings as SettingsIcon, Sparkles, LogOut } from 'lucide-react';
 import DashboardView from '@/components/DashboardView';
 import ConvidadosView from '@/components/ConvidadosView';
@@ -22,33 +22,39 @@ export default function HomePage() {
   const [financeiro, setFinanceiro] = useState<FinanceiroItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Load Initial Data
+  // Load / Reload Data
+  const loadAllData = useCallback(async () => {
+    try {
+      const [configData, convidadosData, financeiroData] = await Promise.all([
+        db.getConfig(),
+        db.getConvidados(),
+        db.getFinanceiro()
+      ]);
+      setConfig(configData);
+      setConvidados(convidadosData);
+      setFinanceiro(financeiroData);
+    } catch (err) {
+      console.error('Erro ao recarregar dados:', err);
+    }
+  }, []);
+
   useEffect(() => {
-    const loadData = async () => {
+    const bootstrap = async () => {
       try {
         const savedSession = localStorage.getItem('mn_session');
-        if (savedSession) {
-          setCurrentUser(JSON.parse(savedSession));
-        }
-        
-        const [configData, convidadosData, financeiroData] = await Promise.all([
-          db.getConfig(),
-          db.getConvidados(),
-          db.getFinanceiro()
-        ]);
-        
-        setConfig(configData);
-        setConvidados(convidadosData);
-        setFinanceiro(financeiroData);
-      } catch (err) {
-        console.error('Erro ao ler dados:', err);
-      } finally {
-        setLoading(false);
-      }
+        if (savedSession) setCurrentUser(JSON.parse(savedSession));
+      } catch {}
+      await loadAllData();
+      setLoading(false);
     };
+    bootstrap();
+  }, [loadAllData]);
 
-    loadData();
-  }, []);
+  // Mobile: change tab AND refresh data
+  const handleMobileTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+    loadAllData();
+  };
 
   // Update actions
   const handleUpdateConfig = async (nome: string, data: string) => {
@@ -288,7 +294,7 @@ export default function HomePage() {
             return (
               <button
                 key={tab.id}
-                onClick={() => !tab.disabled && setActiveTab(tab.id as Tab)}
+                onClick={() => !tab.disabled && handleMobileTabChange(tab.id as Tab)}
                 title={tab.disabled ? 'Em breve' : undefined}
                 className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-full transition-all ${
                   tab.disabled
