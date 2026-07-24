@@ -9,6 +9,23 @@ import { Convidado, Usuario } from '@/utils/supabase';
 // ─────────────────────────────────────────────────────────
 const PARTICIPACOES_OPTIONS = ['Bolo', 'Cerveja', 'Churrasco', 'Doces', 'Não Alcoólico', 'Piscina'];
 
+const formatDateTime = (isoString?: string) => {
+  if (!isoString) return '';
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return '';
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(d);
+  } catch {
+    return '';
+  }
+};
+
 // ─────────────────────────────────────────────────────────
 // DESKTOP: MultiSelect dropdown for Participações
 // ─────────────────────────────────────────────────────────
@@ -567,6 +584,10 @@ function MobileGuestCard({
                     <Star key={i} className="w-2.5 h-2.5 fill-yellow-400 text-yellow-400" />
                   ))}
                 </span>
+              </div>
+              <div className="text-[9px] text-slate-400 font-medium mt-1">
+                Cad: {convidado.criado_em ? formatDateTime(convidado.criado_em) : '-'}
+                {convidado.atualizado_em && convidado.atualizado_em !== convidado.criado_em && ` · Alt: ${formatDateTime(convidado.atualizado_em)}`}
               </div>
             </div>
 
@@ -1243,7 +1264,11 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
                     return (
                       <tr key={c.id} className="hover:bg-slate-50/60 transition-colors whitespace-nowrap">
                         <td className="px-5 py-4 text-[10px] font-extrabold text-slate-800 truncate max-w-[176px]">
-                          {c.nome}
+                          <span className="block font-black text-slate-800">{c.nome}</span>
+                          <span className="block text-[8px] text-slate-400 font-medium mt-0.5">
+                            Cad: {c.criado_em ? formatDateTime(c.criado_em) : '-'}
+                            {c.atualizado_em && c.atualizado_em !== c.criado_em && ` · Alt: ${formatDateTime(c.atualizado_em)}`}
+                          </span>
                         </td>
                         <td className="px-4 py-4">
                           <span

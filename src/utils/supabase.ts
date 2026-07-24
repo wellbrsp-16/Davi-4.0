@@ -23,6 +23,7 @@ export type Convidado = {
   prioridade: 1 | 2 | 3;
   confirmado: boolean;
   criado_em: string;
+  atualizado_em?: string;
 };
 
 export type PlanejamentoItem = {
@@ -173,7 +174,8 @@ class MockSupabaseService {
     const newItem = {
       ...convidado,
       id: Math.random().toString(36).substring(2, 9),
-      criado_em: new Date().toISOString()
+      criado_em: new Date().toISOString(),
+      atualizado_em: new Date().toISOString()
     };
     list.unshift(newItem);
     this.setStorageItem('mn_convidados', list);
@@ -184,7 +186,11 @@ class MockSupabaseService {
     const list = this.getConvidados();
     const index = list.findIndex(c => c.id === id);
     if (index !== -1) {
-      list[index] = { ...list[index], ...updates };
+      list[index] = { 
+        ...list[index], 
+        ...updates,
+        atualizado_em: new Date().toISOString()
+      };
       this.setStorageItem('mn_convidados', list);
       return list[index];
     }
