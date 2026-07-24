@@ -257,50 +257,93 @@ export default function DashboardView({ config, convidados, financeiro, planejam
           </div>
 
           {/* Relação de Pagantes e Criadores */}
-          <div className="glass-card rounded-3xl p-5 shadow-md border border-slate-100 space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+          <div className="glass-card rounded-3xl p-5 shadow-md border border-slate-100">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
               Divisão
             </h3>
-            
-            <div className="space-y-3">
-              {/* Wellington Progress */}
-              <div>
-                <div className="flex justify-between text-xs font-bold text-slate-700 mb-1.5">
-                  <span>Wellington</span>
-                  <span>
-                    {convidados.filter(c => c.convidado_por === 'Wellington').length} convidados / {' '}
-                    {formatCurrency(financeiro.filter(f => f.pagante === 'Wellington').reduce((acc, curr) => acc + Number(curr.valor_total), 0))}
-                  </span>
-                </div>
-                <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full sonic-gradient-primary rounded-full" 
-                    style={{
-                      width: `${(financeiro.filter(f => f.pagante === 'Wellington').reduce((acc, curr) => acc + Number(curr.valor_total), 0) / (totalOrcado || 1)) * 100}%`
-                    }}
-                  ></div>
-                </div>
-              </div>
 
-              {/* Raissa Progress */}
-              <div>
-                <div className="flex justify-between text-xs font-bold text-slate-700 mb-1.5">
-                  <span>Raissa</span>
-                  <span>
-                    {convidados.filter(c => c.convidado_por === 'Raissa').length} convidados / {' '}
-                    {formatCurrency(financeiro.filter(f => f.pagante === 'Raissa').reduce((acc, curr) => acc + Number(curr.valor_total), 0))}
-                  </span>
+            {(() => {
+              const welGastos = financeiro.filter(f => f.pagante === 'Wellington').reduce((acc, curr) => acc + Number(curr.valor_total), 0);
+              const raiGastos = financeiro.filter(f => f.pagante === 'Raissa').reduce((acc, curr) => acc + Number(curr.valor_total), 0);
+              const welConv = convidados.filter(c => c.convidado_por === 'Wellington').length;
+              const raiConv = convidados.filter(c => c.convidado_por === 'Raissa').length;
+              const totalGastos = welGastos + raiGastos;
+              const totalConv = welConv + raiConv;
+
+              const welPctGasto = totalGastos > 0 ? welGastos / totalGastos : 0.5;
+              const raiPctGasto = 1 - welPctGasto;
+
+              const welPctConv = totalConv > 0 ? welConv / totalConv : 0.5;
+              const raiPctConv = 1 - welPctConv;
+
+              return (
+                <div className="space-y-6">
+                  {/* Gastos Split */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-end text-xs">
+                      <div>
+                        <span className="font-extrabold text-blue-600 block text-[10px] uppercase">Wellington</span>
+                        <span className="font-black text-slate-800 text-sm">{formatCurrency(welGastos)}</span>
+                      </div>
+                      <div className="text-center text-[9px] font-bold text-slate-400 uppercase tracking-widest pb-0.5">
+                        Divisão de Gastos
+                      </div>
+                      <div className="text-right">
+                        <span className="font-extrabold text-pink-600 block text-[10px] uppercase">Raissa</span>
+                        <span className="font-black text-slate-800 text-sm">{formatCurrency(raiGastos)}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden flex">
+                      <div 
+                        className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500 flex items-center justify-start pl-3 text-[10px] font-black text-white"
+                        style={{ width: `${welPctGasto * 100}%` }}
+                      >
+                        {welPctGasto > 0.15 && `${Math.round(welPctGasto * 100)}%`}
+                      </div>
+                      <div 
+                        className="h-full bg-gradient-to-r from-pink-500 to-rose-500 transition-all duration-500 flex items-center justify-end pr-3 text-[10px] font-black text-white"
+                        style={{ width: `${raiPctGasto * 100}%` }}
+                      >
+                        {raiPctGasto > 0.15 && `${Math.round(raiPctGasto * 100)}%`}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Convidados Split */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-end text-xs">
+                      <div>
+                        <span className="font-extrabold text-blue-600 block text-[10px] uppercase">Wellington</span>
+                        <span className="font-black text-slate-800 text-sm">{welConv} conv.</span>
+                      </div>
+                      <div className="text-center text-[9px] font-bold text-slate-400 uppercase tracking-widest pb-0.5">
+                        Divisão de Convidados
+                      </div>
+                      <div className="text-right">
+                        <span className="font-extrabold text-pink-600 block text-[10px] uppercase">Raissa</span>
+                        <span className="font-black text-slate-800 text-sm">{raiConv} conv.</span>
+                      </div>
+                    </div>
+                    
+                    <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden flex">
+                      <div 
+                        className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500 flex items-center justify-start pl-3 text-[10px] font-black text-white"
+                        style={{ width: `${welPctConv * 100}%` }}
+                      >
+                        {welPctConv > 0.15 && `${Math.round(welPctConv * 100)}%`}
+                      </div>
+                      <div 
+                        className="h-full bg-gradient-to-r from-pink-500 to-rose-500 transition-all duration-500 flex items-center justify-end pr-3 text-[10px] font-black text-white"
+                        style={{ width: `${raiPctConv * 100}%` }}
+                      >
+                        {raiPctConv > 0.15 && `${Math.round(raiPctConv * 100)}%`}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-pink-500 rounded-full" 
-                    style={{
-                      width: `${(financeiro.filter(f => f.pagante === 'Raissa').reduce((acc, curr) => acc + Number(curr.valor_total), 0) / (totalOrcado || 1)) * 100}%`
-                    }}
-                  ></div>
-                </div>
-              </div>
-            </div>
+              );
+            })()}
           </div>
         </div>
 
