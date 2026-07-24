@@ -647,6 +647,7 @@ export default function FinanceiroView({
           observacao: realObs.trim() || undefined,
           comprovantes: realComprovantes,
           comprovante_url: realComprovantes[0] || undefined,
+          usuario_id: currentUser?.id
         });
       }
     }

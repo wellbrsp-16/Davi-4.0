@@ -227,7 +227,7 @@ export default function DashboardView({ config, convidados, financeiro }: Dashbo
           {/* Relação de Pagantes e Criadores */}
           <div className="glass-card rounded-3xl p-5 shadow-md border border-slate-100 space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Divisão de Responsabilidades (Wellington vs Raissa)
+              Divisão
             </h3>
             
             <div className="space-y-3">

@@ -415,9 +415,13 @@ class DatabaseService {
           .insert(item)
           .select()
           .single();
-        if (!error && data) return data;
+        if (error) {
+          console.error('Supabase addFinanceiro error:', error.message, error.details, error.hint);
+        } else if (data) {
+          return data;
+        }
       } catch (err) {
-        console.error('Supabase addFinanceiro error:', err);
+        console.error('Supabase addFinanceiro exception:', err);
       }
     }
     return mockDb.addFinanceiro(item);
@@ -432,9 +436,13 @@ class DatabaseService {
           .eq('id', id)
           .select()
           .single();
-        if (!error && data) return data;
+        if (error) {
+          console.error('Supabase updateFinanceiro error:', error.message, error.details, error.hint);
+        } else if (data) {
+          return data;
+        }
       } catch (err) {
-        console.error('Supabase updateFinanceiro error:', err);
+        console.error('Supabase updateFinanceiro exception:', err);
       }
     }
     return mockDb.updateFinanceiro(id, updates);
