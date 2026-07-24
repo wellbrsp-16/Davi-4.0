@@ -420,14 +420,15 @@ function MobileGuestCard({
   const startXRef = useRef(0);
   const startYRef = useRef(0);
   const isDraggingRef = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const THRESHOLD = 80;
 
   const getStarCount = (p: number) => (p === 1 ? 5 : p === 2 ? 3 : 1);
 
-  const snapTo = (revealed: boolean) => {
+  const snapTo = (x: number, revealed = false) => {
     setIsTracking(false);
     setIsRevealed(revealed);
-    setSwipeX(revealed ? -THRESHOLD : 0);
+    setSwipeX(x);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -452,62 +453,73 @@ function MobileGuestCard({
 
     if (!canEdit) return;
 
+    const width = containerRef.current?.clientWidth || 320;
+
     if (isRevealed) {
       if (dx > 0) setSwipeX(Math.min(-THRESHOLD + dx, 0));
     } else {
       if (dx < 0) {
         setSwipeX(Math.max(dx, -THRESHOLD));
       } else if (dx > 0) {
-        setSwipeX(Math.min(dx, THRESHOLD));
+        setSwipeX(Math.min(dx, width));
       }
     }
   };
 
   const handleTouchEnd = () => {
-    if (!isDraggingRef.current) return;
-    if (!isRevealed && swipeX < -(THRESHOLD / 2)) {
-      snapTo(true);
-    } else if (isRevealed && swipeX > -(THRESHOLD / 2)) {
-      snapTo(false);
+    if (!isDraggingRef.current || !canEdit) return;
+
+    const width = containerRef.current?.clientWidth || 320;
+
+    if (!isRevealed) {
+      if (swipeX < -(THRESHOLD / 2)) {
+        snapTo(-THRESHOLD, true);
+      } else if (swipeX > 80 || swipeX > width * 0.3) {
+        onSetConfirmed();
+        snapTo(0, false);
+      } else {
+        snapTo(0, false);
+      }
     } else {
-      snapTo(isRevealed);
+      if (swipeX > -(THRESHOLD / 2)) {
+        snapTo(0, false);
+      } else {
+        snapTo(-THRESHOLD, true);
+      }
     }
   };
 
   const handleCardTap = () => {
     if (isRevealed) {
-      snapTo(false);
-    } else {
+      snapTo(0, false);
+    } else if (canEdit) {
       onEdit();
     }
   };
 
   return (
-    <div className="relative rounded-2xl overflow-hidden mb-2.5 shadow-sm">
-      {/* Background action for Swipe Right: Confirmar (Left side) */}
-      {canEdit && (
-        <div
-          className="absolute inset-y-0 left-0 flex items-center justify-start pl-5 bg-green-500 text-white rounded-l-2xl font-bold text-xs gap-1.5"
-          style={{ width: THRESHOLD * 1.5 }}
-        >
-          <Check className="w-5 h-5 shrink-0" />
-          <span className="font-extrabold uppercase text-[10px]">Confirmar</span>
+    <div ref={containerRef} className="relative rounded-2xl overflow-hidden mb-2.5 shadow-sm">
+      {/* Background action for Swipe Right: Full card width Green Confirm */}
+      {canEdit && swipeX > 0 && (
+        <div className="absolute inset-0 bg-green-500 text-white rounded-2xl flex items-center justify-start pl-6 font-black text-sm gap-2">
+          <Check className="w-6 h-6 shrink-0 animate-bounce" />
+          <span className="uppercase tracking-wider">Confirmar Presença</span>
         </div>
       )}
 
       {/* Background action buttons revealed on swipe left (Right side) */}
-      {canEdit && (
+      {canEdit && swipeX < 0 && (
         <div className="absolute inset-y-0 right-0 flex" style={{ width: THRESHOLD }}>
           <button
             onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => { e.stopPropagation(); snapTo(false); onEdit(); }}
+            onClick={(e) => { e.stopPropagation(); snapTo(0, false); onEdit(); }}
             className="flex-1 flex items-center justify-center bg-sonic-blue text-white"
           >
             <Edit2 className="w-5 h-5" />
           </button>
           <button
             onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => { e.stopPropagation(); snapTo(false); onDelete(); }}
+            onClick={(e) => { e.stopPropagation(); snapTo(0, false); onDelete(); }}
             className="flex-1 flex items-center justify-center bg-red-500 text-white rounded-r-2xl"
           >
             <Trash2 className="w-5 h-5" />
@@ -515,7 +527,7 @@ function MobileGuestCard({
         </div>
       )}
 
-      {/* Card content — slides left on swipe */}
+      {/* Card content — slides on swipe */}
       <div
         style={{
           transform: `translateX(${swipeX}px)`,
