@@ -263,8 +263,8 @@ export default function DashboardView({ config, convidados, financeiro, planejam
             </h3>
 
             {(() => {
-              const welGastos = financeiro.filter(f => f.pagante === 'Wellington').reduce((acc, curr) => acc + Number(curr.valor_total), 0);
-              const raiGastos = financeiro.filter(f => f.pagante === 'Raissa').reduce((acc, curr) => acc + Number(curr.valor_total), 0);
+              const welGastos = financeiro.filter(f => f.pagante === 'Wellington').reduce((acc, curr) => acc + Number(curr.valor_pago), 0);
+              const raiGastos = financeiro.filter(f => f.pagante === 'Raissa').reduce((acc, curr) => acc + Number(curr.valor_pago), 0);
               const welConv = convidados.filter(c => c.convidado_por === 'Wellington').length;
               const raiConv = convidados.filter(c => c.convidado_por === 'Raissa').length;
               const totalGastos = welGastos + raiGastos;
