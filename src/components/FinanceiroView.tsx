@@ -86,9 +86,6 @@ export default function FinanceiroView({ financeiro, onAdd, onUpdate, onDelete }
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold text-slate-800">Financeiro da Festa</h2>
-            <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 bg-slate-900 text-red-450 rounded-full border border-red-900/40">
-              Guardião: Shadow
-            </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
             Total Pago: {formatCurrency(totalPago)} de {formatCurrency(totalOrcado)}

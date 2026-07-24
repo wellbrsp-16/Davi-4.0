@@ -1,8 +1,70 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Plus, Trash2, Edit2, Check, X, Star } from 'lucide-react';
+import { Search, Plus, Trash2, Edit2, Check, X, Star, UserCheck, User } from 'lucide-react';
 import { Convidado } from '@/utils/supabase';
+
+// MultiSelect component for Participações column
+function MultiSelectParticipacoes({
+  selected,
+  onChange
+}: {
+  selected: string[];
+  onChange: (selected: string[]) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  // Alphabetical list of options
+  const options = ['Bolo', 'Cerveja', 'Churrasco', 'Doces', 'Não Alcoólico', 'Piscina'];
+
+  const toggleOption = (option: string) => {
+    if (selected.includes(option)) {
+      onChange(selected.filter(item => item !== option));
+    } else {
+      onChange([...selected, option].sort());
+    }
+  };
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full text-left bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold focus:outline-none flex items-center justify-between gap-1 cursor-pointer select-none"
+      >
+        <span className="truncate block max-w-[120px]">
+          {selected.length === 0 ? 'Nenhuma' : selected.join(', ')}
+        </span>
+        <span className="text-[9px] text-slate-400 shrink-0">▼</span>
+      </button>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)}></div>
+          <div className="absolute left-0 mt-1 w-44 bg-white border border-slate-250 rounded-2xl shadow-xl z-20 p-2.5 space-y-1 text-slate-700">
+            {options.map(opt => {
+              const isChecked = selected.includes(opt);
+              return (
+                <label
+                  key={opt}
+                  className="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-50 rounded-lg text-xs font-semibold cursor-pointer select-none"
+                >
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => toggleOption(opt)}
+                    className="rounded text-sonic-blue focus:ring-sonic-blue w-3.5 h-3.5"
+                  />
+                  <span>{opt}</span>
+                </label>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 interface ConvidadosViewProps {
   convidados: Convidado[];
@@ -17,7 +79,7 @@ interface NewGuestRow {
   tipo: 'Adulto' | 'Criança';
   convidado_por: 'Wellington' | 'Raissa';
   prioridade: 1 | 2 | 3;
-  participacoes: string;
+  participacoes: string[];
   confirmado: boolean;
 }
 
@@ -31,6 +93,12 @@ export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }
   
   // Excel-style state for editing existing rows
   const [editingRows, setEditingRows] = useState<Record<string, Convidado>>({});
+
+  const getStarCount = (prioridade: number): number => {
+    if (prioridade === 1) return 5;
+    if (prioridade === 2) return 3;
+    return 1;
+  };
 
   // Filtered convidados
   const filtered = convidados.filter(c => {
@@ -54,7 +122,7 @@ export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }
       tipo: 'Adulto',
       convidado_por: 'Wellington',
       prioridade: 1,
-      participacoes: 'Festa',
+      participacoes: [],
       confirmado: false
     };
     setNewRows(prev => [newRow, ...prev]);
@@ -74,7 +142,7 @@ export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }
       tipo: row.tipo,
       convidado_por: row.convidado_por,
       prioridade: row.prioridade,
-      participacoes: row.participacoes.split(',').map(p => p.trim()).filter(Boolean),
+      participacoes: row.participacoes,
       confirmado: row.confirmado
     };
 
@@ -111,18 +179,12 @@ export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }
       return;
     }
 
-    // If participacoes was parsed as string or remains array
-    let participacoesArray = edited.participacoes;
-    if (typeof edited.participacoes === 'string') {
-      participacoesArray = (edited.participacoes as string).split(',').map(p => p.trim()).filter(Boolean);
-    }
-
     await onUpdate(id, {
       nome: edited.nome.trim(),
       tipo: edited.tipo,
       convidado_por: edited.convidado_por,
       prioridade: edited.prioridade,
-      participacoes: participacoesArray,
+      participacoes: edited.participacoes,
       confirmado: edited.confirmado
     });
 
@@ -154,81 +216,90 @@ export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }
   };
 
   return (
-    <div className="space-y-5 animate-dash">
+    <div className="space-y-5 animate-dash md:h-[calc(100vh-140px)] md:flex md:flex-col">
       
-      {/* Header and Add Button */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold text-slate-800">Lista de Convidados</h2>
-            <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full border border-orange-200">
-              Guardião: Tails
-            </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
             {convidados.filter(c => c.confirmado).length} confirmados de {convidados.length} total
           </p>
         </div>
-        
-        <button
-          onClick={handleAddNewRow}
-          className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold text-white sonic-gradient-primary rounded-2xl shadow-md active:scale-95 transition-all cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          Novo Convidado
-        </button>
       </div>
 
-      {/* Search and Filters */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-4 top-3.5" />
-          <input
-            type="text"
-            placeholder="Buscar convidado..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none shadow-sm focus:border-sonic-blue"
-          />
+      {/* Search, Filters and Add Button (excel-like tool bar) */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white/40 p-3 rounded-3xl border border-slate-200/50 shadow-sm shrink-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1">
+          {/* Guest Search Input */}
+          <div className="relative w-full sm:w-56">
+            <Search className="w-4 h-4 text-slate-400 absolute left-4 top-3.5" />
+            <input
+              type="text"
+              placeholder="Buscar convidado..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none shadow-sm focus:border-sonic-blue"
+            />
+          </div>
+
+          {/* Status Search Select (matching guest search style) */}
+          <div className="relative w-full sm:w-44">
+            <UserCheck className="w-4 h-4 text-slate-400 absolute left-4 top-3.5 pointer-events-none" />
+            <select
+              value={filterConfirmado}
+              onChange={e => setFilterConfirmado(e.target.value as any)}
+              className="w-full pl-11 pr-8 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none shadow-sm focus:border-sonic-blue cursor-pointer appearance-none"
+            >
+              <option value="todos">Todos Status</option>
+              <option value="confirmados">Confirmado</option>
+              <option value="pendentes">Pendente</option>
+            </select>
+            <span className="absolute right-4 top-4 text-[9px] text-slate-400 pointer-events-none">▼</span>
+          </div>
+
+          {/* Convidado Por Select (matching guest search style) */}
+          <div className="relative w-full sm:w-48">
+            <User className="w-4 h-4 text-slate-400 absolute left-4 top-3.5 pointer-events-none" />
+            <select
+              value={filterConvidadoPor}
+              onChange={e => setFilterConvidadoPor(e.target.value as any)}
+              className="w-full pl-11 pr-8 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none shadow-sm focus:border-sonic-blue cursor-pointer appearance-none"
+            >
+              <option value="todos">Convidado por...</option>
+              <option value="Wellington">Wellington</option>
+              <option value="Raissa">Raissa</option>
+            </select>
+            <span className="absolute right-4 top-4 text-[9px] text-slate-400 pointer-events-none">▼</span>
+          </div>
         </div>
 
-        <div className="flex gap-2">
-          {/* Confirmed Filter */}
-          <select
-            value={filterConfirmado}
-            onChange={e => setFilterConfirmado(e.target.value as any)}
-            className="px-4 py-2.5 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-600 focus:outline-none shadow-sm cursor-pointer"
+        <div className="flex flex-wrap items-center gap-2 md:justify-end shrink-0">
+          {/* New Guest Button */}
+          <button
+            onClick={handleAddNewRow}
+            className="flex items-center gap-1.5 px-4 py-3 text-sm font-bold text-white sonic-gradient-primary rounded-2xl shadow-md active:scale-95 transition-all cursor-pointer whitespace-nowrap"
           >
-            <option value="todos">Todos Status</option>
-            <option value="confirmados">Confirmados</option>
-            <option value="pendentes">Pendentes</option>
-          </select>
-
-          {/* Invited By Filter */}
-          <select
-            value={filterConvidadoPor}
-            onChange={e => setFilterConvidadoPor(e.target.value as any)}
-            className="px-4 py-2.5 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-600 focus:outline-none shadow-sm cursor-pointer"
-          >
-            <option value="todos">Convidado por...</option>
-            <option value="Wellington">Wellington</option>
-            <option value="Raissa">Raissa</option>
-          </select>
+            <Plus className="w-4 h-4" />
+            Convidado
+          </button>
         </div>
       </div>
 
       {/* Grid Excel-Style Table Wrapper */}
-      <div className="glass-card rounded-3xl border border-slate-200/60 shadow-xl overflow-hidden">
-        <div className="overflow-x-auto w-full">
+      <div className="glass-card rounded-3xl border border-slate-200/60 shadow-xl overflow-hidden md:flex-1 md:flex md:flex-col bg-white">
+        <div className="overflow-x-auto w-full md:flex-1 md:overflow-y-auto">
           <table className="w-full text-left border-collapse min-w-[700px]">
-            <thead>
-              <tr className="bg-slate-900 text-white text-[10px] uppercase font-bold tracking-wider">
-                <th className="px-5 py-4 w-1/3">Nome do Convidado</th>
-                <th className="px-4 py-4 w-32">Tipo</th>
-                <th className="px-4 py-4 w-36">Convidado Por</th>
-                <th className="px-4 py-4 w-28">Prioridade</th>
-                <th className="px-4 py-4 w-40">Participações</th>
-                <th className="px-4 py-4 w-28 text-center">Confirmado</th>
+            <thead className="sticky top-0 z-10 bg-slate-900">
+              <tr className="bg-slate-900 text-white text-[10px] uppercase font-bold tracking-wider whitespace-nowrap">
+                <th className="px-5 py-4 w-40">Nome</th>
+                <th className="px-4 py-4 w-28">Tipo</th>
+                <th className="px-4 py-4 w-32">De</th>
+                <th className="px-4 py-4 w-24">Prioridade</th>
+                <th className="px-4 py-4 w-96">Participações</th>
+                <th className="px-4 py-4 w-28 text-center">Status</th>
                 <th className="px-5 py-4 w-32 text-center">Ações</th>
               </tr>
             </thead>
@@ -236,13 +307,14 @@ export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }
               
               {/* Render TEMPORARY Excel new rows */}
               {newRows.map(row => (
-                <tr key={row.tempId} className="bg-yellow-50/40 hover:bg-yellow-50/70 transition-colors animate-pulse">
+                <tr key={row.tempId} className="bg-yellow-50/40 hover:bg-yellow-50/70 transition-colors whitespace-nowrap">
                   {/* Name Input */}
                   <td className="px-5 py-3">
                     <input
                       type="text"
-                      placeholder="Nome do convidado..."
+                      placeholder="Nome..."
                       value={row.nome}
+                      maxLength={15}
                       onChange={e => handleUpdateNewRowField(row.tempId, 'nome', e.target.value)}
                       className="w-full bg-white border border-yellow-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:border-sonic-blue font-bold text-slate-800"
                       autoFocus
@@ -277,19 +349,16 @@ export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }
                       onChange={e => handleUpdateNewRowField(row.tempId, 'prioridade', Number(e.target.value))}
                       className="w-full bg-white border border-yellow-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-700 focus:outline-none"
                     >
-                      <option value="1">Alta (1)</option>
-                      <option value="2">Média (2)</option>
-                      <option value="3">Baixa (3)</option>
+                      <option value="1">5 Estrelas (1)</option>
+                      <option value="2">3 Estrelas (2)</option>
+                      <option value="3">1 Estrela (3)</option>
                     </select>
                   </td>
-                  {/* Participacoes Input */}
+                  {/* Participacoes MultiSelect */}
                   <td className="px-4 py-3">
-                    <input
-                      type="text"
-                      placeholder="Festa, Almoço"
-                      value={row.participacoes}
-                      onChange={e => handleUpdateNewRowField(row.tempId, 'participacoes', e.target.value)}
-                      className="w-full bg-white border border-yellow-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-sonic-blue font-semibold"
+                    <MultiSelectParticipacoes
+                      selected={row.participacoes}
+                      onChange={opts => handleUpdateNewRowField(row.tempId, 'participacoes', opts)}
                     />
                   </td>
                   {/* Confirm Checkbox */}
@@ -338,12 +407,13 @@ export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }
                   if (isEditing && editingRow) {
                     // EDITABLE ROW STYLE
                     return (
-                      <tr key={c.id} className="bg-blue-50/30 hover:bg-blue-50/50 transition-colors">
+                      <tr key={c.id} className="bg-blue-50/30 hover:bg-blue-50/50 transition-colors whitespace-nowrap">
                         {/* Name Edit */}
                         <td className="px-5 py-3">
                           <input
                             type="text"
                             value={editingRow.nome}
+                            maxLength={15}
                             onChange={e => handleUpdateEditField(c.id, 'nome', e.target.value)}
                             className="w-full bg-white border border-blue-300 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:border-sonic-blue font-bold text-slate-800"
                           />
@@ -372,27 +442,21 @@ export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }
                         </td>
                         {/* Priority Edit */}
                         <td className="px-4 py-3">
-                          <select
-                            value={editingRow.prioridade}
-                            onChange={e => handleUpdateEditField(c.id, 'prioridade', Number(e.target.value))}
-                            className="w-full bg-white border border-blue-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-700 focus:outline-none"
-                          >
-                            <option value="1">Alta (1)</option>
-                            <option value="2">Média (2)</option>
-                            <option value="3">Baixa (3)</option>
-                          </select>
+                           <select
+                             value={editingRow.prioridade}
+                             onChange={e => handleUpdateEditField(c.id, 'prioridade', Number(e.target.value))}
+                             className="w-full bg-white border border-blue-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-700 focus:outline-none"
+                           >
+                             <option value="1">5 Estrelas (1)</option>
+                             <option value="2">3 Estrelas (2)</option>
+                             <option value="3">1 Estrela (3)</option>
+                           </select>
                         </td>
-                        {/* Participations Edit */}
+                        {/* Participations Edit MultiSelect */}
                         <td className="px-4 py-3">
-                          <input
-                            type="text"
-                            value={
-                              typeof editingRow.participacoes === 'string'
-                                ? editingRow.participacoes
-                                : editingRow.participacoes.join(', ')
-                            }
-                            onChange={e => handleUpdateEditField(c.id, 'participacoes', e.target.value)}
-                            className="w-full bg-white border border-blue-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-sonic-blue font-semibold"
+                          <MultiSelectParticipacoes
+                            selected={editingRow.participacoes || []}
+                            onChange={opts => handleUpdateEditField(c.id, 'participacoes', opts)}
                           />
                         </td>
                         {/* Confirm Edit */}
@@ -429,9 +493,9 @@ export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }
 
                   // STATIC NORMAL ROW STYLE
                   return (
-                    <tr key={c.id} className="hover:bg-slate-50/60 transition-colors">
+                    <tr key={c.id} className="hover:bg-slate-50/60 transition-colors whitespace-nowrap">
                       {/* Name */}
-                      <td className="px-5 py-4 font-bold text-slate-800">
+                      <td className="px-5 py-4 text-[10px] font-extrabold text-slate-800 truncate max-w-[176px]">
                         {c.nome}
                       </td>
                       {/* Type */}
@@ -443,20 +507,27 @@ export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }
                         </span>
                       </td>
                       {/* Invited By */}
-                      <td className="px-4 py-4 font-semibold text-slate-600 text-xs">
+                      <td className="px-4 py-4 text-[10px] font-extrabold text-slate-600">
                         {c.convidado_por}
                       </td>
                       {/* Priority */}
                       <td className="px-4 py-4">
                         <span className="flex items-center gap-0.5">
-                          {Array.from({ length: 4 - c.prioridade }).map((_, i) => (
-                            <Star key={i} className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+                          {Array.from({ length: getStarCount(c.prioridade) }).map((_, i) => (
+                            <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400 shrink-0" />
                           ))}
                         </span>
                       </td>
                       {/* Participations */}
                       <td className="px-4 py-4 text-xs font-medium text-slate-500">
-                        {c.participacoes.join(', ')}
+                        <div className="flex items-center gap-1 overflow-x-auto scrollbar-none flex-nowrap">
+                          {c.participacoes.map(p => (
+                            <span key={p} className="bg-slate-100 text-slate-700 text-[10px] font-semibold px-2 py-0.5 rounded-md shrink-0">
+                              {p}
+                            </span>
+                          ))}
+                          {c.participacoes.length === 0 && <span className="text-slate-400 italic">Nenhuma</span>}
+                        </div>
                       </td>
                       {/* Confirm status */}
                       <td className="px-4 py-4 text-center">

@@ -66,9 +66,6 @@ export default function ConfiguracaoView({ config, onUpdateConfig, onLogout }: C
                 <Settings className="w-4 h-4 text-shoes-red" />
                 Configurações do Aniversário
               </h3>
-              <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 bg-red-100 text-red-700 rounded-full border border-red-200">
-                Guardião: Knuckles
-              </span>
             </div>
 
             <form onSubmit={handleSaveConfig} className="space-y-4">

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Calendar, Users, DollarSign, Clock, Sparkles } from 'lucide-react';
+import { Calendar, Users, DollarSign, Clock } from 'lucide-react';
 import { Convidado, FinanceiroItem } from '@/utils/supabase';
 
 interface DashboardProps {
@@ -68,16 +68,9 @@ export default function DashboardView({ config, convidados, financeiro }: Dashbo
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/50 to-transparent"></div>
             
             <div className="absolute bottom-0 left-0 right-0 p-6 text-white space-y-2">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-600/60 backdrop-blur-md rounded-full text-[10px] font-black tracking-wider uppercase border border-blue-400/30">
-                <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-pulse" />
-                Sonic, Tails, Knuckles & Shadow
-              </div>
-              <h2 className="text-xl md:text-2xl font-black tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+              <h2 className="text-base font-black tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                 Aniversário do {config.nome_aniversariante}!
               </h2>
-              <p className="text-slate-200 text-xs md:text-sm font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                Painel oficial de 4 anos de pura velocidade e aventura!
-              </p>
 
               <div className="pt-1.5 flex items-center gap-2 text-xs text-yellow-300 font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                 <Calendar className="w-4 h-4 shrink-0" />

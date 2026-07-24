@@ -98,9 +98,9 @@ class MockSupabaseService {
         id: 'raissa-id',
         nome: 'Raissa',
         login: 'raissa',
-        senha_hash: bcrypt.hashSync('niver2026', 10),
+        senha_hash: bcrypt.hashSync('123456@', 10),
         ultimo_acesso: null,
-        forcar_troca_senha: false
+        forcar_troca_senha: true
       }
     ];
     return this.getStorageItem<Usuario[]>('mn_usuarios', defaultUsuarios);

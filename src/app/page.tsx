@@ -154,33 +154,32 @@ export default function HomePage() {
           {/* Navigation Links */}
           <nav className="flex flex-col gap-2">
             {[
-              { id: 'dashboard', label: 'Painel Geral', character: 'Sonic', color: 'border-blue-500 text-blue-400 bg-blue-950/20', activeBg: 'bg-sonic-blue text-white shadow-blue-900/40', icon: Home },
-              { id: 'convidados', label: 'Convidados', character: 'Tails', color: 'border-orange-500 text-orange-400 bg-orange-950/20', activeBg: 'bg-orange-600 text-white shadow-orange-900/40', icon: Users },
-              { id: 'financeiro', label: 'Financeiro', character: 'Shadow', color: 'border-red-600 text-red-400 bg-red-950/20', activeBg: 'bg-red-700 text-white shadow-red-950/40', icon: DollarSign },
-              { id: 'configuracao', label: 'Configurações', character: 'Knuckles', color: 'border-red-500 text-red-500 bg-red-950/10', activeBg: 'bg-shoes-red text-white shadow-red-900/40', icon: SettingsIcon }
+              { id: 'dashboard', label: 'Painel Geral', character: 'Sonic', color: 'border-blue-500 text-blue-400 bg-blue-950/20', activeBg: 'bg-sonic-blue text-white shadow-blue-900/40', icon: Home, disabled: false },
+              { id: 'convidados', label: 'Convidados', character: 'Tails', color: 'border-orange-500 text-orange-400 bg-orange-950/20', activeBg: 'bg-orange-600 text-white shadow-orange-900/40', icon: Users, disabled: false },
+              ...(currentUser?.login?.toLowerCase() === 'admin' ? [
+                { id: 'financeiro', label: 'Financeiro', character: 'Shadow', color: 'border-red-600 text-red-400 bg-red-950/20', activeBg: 'bg-red-700 text-white shadow-red-950/40', icon: DollarSign, disabled: false },
+                { id: 'configuracao', label: 'Configurações', character: 'Knuckles', color: 'border-red-500 text-red-500 bg-red-950/10', activeBg: 'bg-shoes-red text-white shadow-red-900/40', icon: SettingsIcon, disabled: false }
+              ] : [])
             ].map(tab => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as Tab)}
-                  className={`flex flex-col items-stretch p-3 rounded-2xl transition-all cursor-pointer border text-left ${
-                    isActive 
-                      ? `${tab.activeBg} border-transparent` 
-                      : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-white hover:border-slate-700'
+                  onClick={() => !tab.disabled && setActiveTab(tab.id as Tab)}
+                  title={tab.disabled ? 'Em breve' : undefined}
+                  className={`flex flex-col items-stretch p-3 rounded-2xl transition-all border text-left ${
+                    tab.disabled
+                      ? 'border-slate-800 bg-slate-900/40 text-slate-600 cursor-not-allowed opacity-50'
+                      : isActive
+                        ? `${tab.activeBg} border-transparent cursor-pointer`
+                        : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-white hover:border-slate-700 cursor-pointer'
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <Icon className="w-5 h-5 shrink-0" />
                     <span className="text-sm font-bold">{tab.label}</span>
-                  </div>
-                  <div className="mt-1 flex items-center justify-between pl-8">
-                    <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full border ${
-                      isActive ? 'bg-white/20 border-white/20 text-white' : tab.color
-                    }`}>
-                      Guardião: {tab.character}
-                    </span>
+                    {tab.disabled && <span className="ml-auto text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-slate-800 text-slate-500 rounded-full border border-slate-700">Em breve</span>}
                   </div>
                 </button>
               );
@@ -229,9 +228,9 @@ export default function HomePage() {
                 activeTab === 'convidados' ? 'bg-orange-500' :
                 activeTab === 'financeiro' ? 'bg-slate-800' : 'bg-red-500'
               }`}></span>
-              {activeTab === 'dashboard' ? 'Sonic' :
-               activeTab === 'convidados' ? 'Tails' :
-               activeTab === 'financeiro' ? 'Shadow' : 'Knuckles'}
+              {activeTab === 'dashboard' ? 'Painel' :
+               activeTab === 'convidados' ? 'Convidados' :
+               activeTab === 'financeiro' ? 'Financeiro' : 'Ajustes'}
             </span>
           </div>
         </header>
@@ -256,7 +255,7 @@ export default function HomePage() {
             />
           )}
 
-          {activeTab === 'financeiro' && (
+          {activeTab === 'financeiro' && currentUser?.login?.toLowerCase() === 'admin' && (
             <FinanceiroView 
               financeiro={financeiro}
               onAdd={handleAddFinanceiro}
@@ -265,7 +264,7 @@ export default function HomePage() {
             />
           )}
 
-          {activeTab === 'configuracao' && (
+          {activeTab === 'configuracao' && currentUser?.login?.toLowerCase() === 'admin' && (
             <ConfiguracaoView 
               config={config}
               onUpdateConfig={handleUpdateConfig}
@@ -277,21 +276,26 @@ export default function HomePage() {
         {/* Mobile Bottom Tab Bar (Hidden on desktop) */}
         <nav className="md:hidden fixed bottom-4 left-4 right-4 z-50 bg-white/95 backdrop-blur-md border border-slate-200/50 shadow-xl rounded-full p-2 flex items-center justify-between">
           {[
-            { id: 'dashboard', label: 'Painel', icon: Home },
-            { id: 'convidados', label: 'Convidados', icon: Users },
-            { id: 'financeiro', label: 'Financeiro', icon: DollarSign },
-            { id: 'configuracao', label: 'Config', icon: SettingsIcon }
+            { id: 'dashboard', label: 'Painel', icon: Home, disabled: false },
+            { id: 'convidados', label: 'Convidados', icon: Users, disabled: false },
+            ...(currentUser?.login?.toLowerCase() === 'admin' ? [
+              { id: 'financeiro', label: 'Financeiro', icon: DollarSign, disabled: false },
+              { id: 'configuracao', label: 'Config', icon: SettingsIcon, disabled: false }
+            ] : [])
           ].map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as Tab)}
-                className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-full transition-all cursor-pointer ${
-                  isActive 
-                    ? 'text-white sonic-gradient-primary shadow-md active:scale-95 scale-105' 
-                    : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                onClick={() => !tab.disabled && setActiveTab(tab.id as Tab)}
+                title={tab.disabled ? 'Em breve' : undefined}
+                className={`flex-1 flex flex-col items-center justify-center py-2.5 rounded-full transition-all ${
+                  tab.disabled
+                    ? 'text-slate-300 cursor-not-allowed opacity-50'
+                    : isActive
+                      ? 'text-white sonic-gradient-primary shadow-md active:scale-95 scale-105 cursor-pointer'
+                      : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50 cursor-pointer'
                 }`}
               >
                 <Icon className={`w-5 h-5 ${isActive ? 'scale-110' : ''}`} />

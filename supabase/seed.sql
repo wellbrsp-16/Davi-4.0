@@ -13,19 +13,23 @@ values (
 )
 on conflict (login) do nothing;
 
--- Seed Wellington and Raissa as users too
+-- Seed Wellington as user
 insert into usuarios (nome, login, senha_hash, forcar_troca_senha)
 values (
     'Wellington',
     'wellington',
     crypt('niver2026', gen_salt('bf', 10)),
     false
-),
-(
+)
+on conflict (login) do nothing;
+
+-- Seed Raissa with temporary password (forced change on first login)
+insert into usuarios (nome, login, senha_hash, forcar_troca_senha)
+values (
     'Raissa',
     'raissa',
-    crypt('niver2026', gen_salt('bf', 10)),
-    false
+    crypt('123456@', gen_salt('bf', 10)),
+    true
 )
 on conflict (login) do nothing;
 
