@@ -121,10 +121,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
           </button>
         </form>
 
-        {/* Small theme guide footer */}
-        <div className="mt-8 pt-6 border-t border-slate-100 text-center text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-          Festa de 4 Anos
-        </div>
+
 
       </div>
     </div>
