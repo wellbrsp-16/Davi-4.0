@@ -42,11 +42,6 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-100 px-4 green-hill-pattern">
       <div className="w-full max-w-md glass-card rounded-3xl p-8 border border-slate-200/50 shadow-2xl relative overflow-hidden">
-        
-        {/* Decorative Golden Ring */}
-        <div className="absolute -top-12 -right-12 w-32 h-32 border-8 border-yellow-400/25 rounded-full animate-spin-slow"></div>
-        <div className="absolute -bottom-10 -left-10 w-24 h-24 border-4 border-blue-400/10 rounded-full"></div>
-
         <div className="relative z-10 flex flex-col items-center mb-8 text-center">
           {/* Sonic Spin Logo */}
           <div className="w-16 h-16 border-4 border-yellow-400 rounded-full flex items-center justify-center animate-ring-pulse shadow-[0_0_15px_rgba(234,179,8,0.6)] bg-sonic-blue text-white font-black text-2xl tracking-tighter mb-4">

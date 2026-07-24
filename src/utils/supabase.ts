@@ -33,6 +33,7 @@ export type PlanejamentoItem = {
   preco_unitario?: number;
   valor_estimado: number;
   observacao?: string;
+  usuario_id?: string;
   criado_em: string;
 };
 
@@ -53,6 +54,7 @@ export type FinanceiroItem = {
   total_parcelas?: number;
   comprovantes?: string[];
   comprovante_url?: string;
+  usuario_id?: string;
   criado_em: string;
 };
 

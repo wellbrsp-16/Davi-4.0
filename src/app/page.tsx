@@ -189,8 +189,8 @@ export default function HomePage() {
             {[
               { id: 'dashboard', label: 'Painel Geral', character: 'Sonic', color: 'border-blue-500 text-blue-400 bg-blue-950/20', activeBg: 'bg-sonic-blue text-white shadow-blue-900/40', icon: Home, disabled: false },
               { id: 'convidados', label: 'Convidados', character: 'Tails', color: 'border-orange-500 text-orange-400 bg-orange-950/20', activeBg: 'bg-orange-600 text-white shadow-orange-900/40', icon: Users, disabled: false },
+              { id: 'financeiro', label: 'Financeiro', character: 'Shadow', color: 'border-red-600 text-red-400 bg-red-950/20', activeBg: 'bg-red-700 text-white shadow-red-950/40', icon: DollarSign, disabled: false },
               ...(currentUser?.login?.toLowerCase() === 'admin' ? [
-                { id: 'financeiro', label: 'Financeiro', character: 'Shadow', color: 'border-red-600 text-red-400 bg-red-950/20', activeBg: 'bg-red-700 text-white shadow-red-950/40', icon: DollarSign, disabled: false },
                 { id: 'configuracao', label: 'Configurações', character: 'Knuckles', color: 'border-red-500 text-red-500 bg-red-950/10', activeBg: 'bg-shoes-red text-white shadow-red-900/40', icon: SettingsIcon, disabled: false }
               ] : [])
             ].map(tab => {
@@ -284,10 +284,11 @@ export default function HomePage() {
             />
           )}
 
-          {activeTab === 'financeiro' && currentUser?.login?.toLowerCase() === 'admin' && (
+          {activeTab === 'financeiro' && (
             <FinanceiroView 
               financeiro={financeiro}
               planejamento={planejamento}
+              currentUser={currentUser}
               onAddFinanceiro={handleAddFinanceiro}
               onUpdateFinanceiro={handleUpdateFinanceiro}
               onDeleteFinanceiro={handleDeleteFinanceiro}
@@ -311,8 +312,8 @@ export default function HomePage() {
           {[
             { id: 'dashboard', label: 'Painel', icon: Home, disabled: false },
             { id: 'convidados', label: 'Convidados', icon: Users, disabled: false },
+            { id: 'financeiro', label: 'Financeiro', icon: DollarSign, disabled: false },
             ...(currentUser?.login?.toLowerCase() === 'admin' ? [
-              { id: 'financeiro', label: 'Financeiro', icon: DollarSign, disabled: false },
               { id: 'configuracao', label: 'Config', icon: SettingsIcon, disabled: false }
             ] : [])
           ].map(tab => {

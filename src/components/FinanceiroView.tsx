@@ -21,9 +21,10 @@ import {
   Sparkles,
   ArrowRight,
   TrendingUp,
-  PieChart
+  PieChart,
+  Lock
 } from 'lucide-react';
-import { FinanceiroItem, PlanejamentoItem } from '@/utils/supabase';
+import { FinanceiroItem, PlanejamentoItem, Usuario } from '@/utils/supabase';
 
 // ─────────────────────────────────────────────────────────
 // TYPES
@@ -31,6 +32,7 @@ import { FinanceiroItem, PlanejamentoItem } from '@/utils/supabase';
 interface FinanceiroViewProps {
   financeiro: FinanceiroItem[];
   planejamento: PlanejamentoItem[];
+  currentUser?: Usuario | null;
   onAddFinanceiro: (item: Omit<FinanceiroItem, 'id' | 'valor_pendente' | 'criado_em'> | Omit<FinanceiroItem, 'id' | 'valor_pendente' | 'criado_em'>[]) => void;
   onUpdateFinanceiro: (id: string, updates: Partial<FinanceiroItem>) => void;
   onDeleteFinanceiro: (id: string) => void;
@@ -47,6 +49,7 @@ type SortFieldPlanejamento = 'item' | 'valor_estimado' | 'unidade_medida';
 // ─────────────────────────────────────────────────────────
 function MobileFinanceiroCard({
   item,
+  canEdit,
   onEdit,
   onDelete,
   onToggleStatus,
@@ -55,6 +58,7 @@ function MobileFinanceiroCard({
   formatQuantityDisplay
 }: {
   item: FinanceiroItem;
+  canEdit: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onToggleStatus: () => void;
@@ -80,6 +84,7 @@ function MobileFinanceiroCard({
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
+    if (!canEdit) return;
     const dx = e.touches[0].clientX - startXRef.current;
     const dy = e.touches[0].clientY - startYRef.current;
 
@@ -99,7 +104,7 @@ function MobileFinanceiroCard({
   };
 
   const handleTouchEnd = () => {
-    if (!isDraggingRef.current) return;
+    if (!isDraggingRef.current || !canEdit) return;
     const width = containerRef.current?.clientWidth || 320;
 
     if (swipeX > width * 0.4 || swipeX > 120) {
@@ -115,7 +120,7 @@ function MobileFinanceiroCard({
   return (
     <div ref={containerRef} className="relative overflow-hidden rounded-2xl border border-slate-200/80 shadow-sm bg-white touch-pan-y">
       {/* Background fill during swipe */}
-      {swipeX > 0 && (
+      {canEdit && swipeX > 0 && (
         <div
           className="absolute inset-0 bg-green-500 flex items-center justify-start pl-6 text-white font-extrabold text-sm z-0 transition-none"
           style={{ width: `${progressPercent}%` }}
@@ -132,9 +137,9 @@ function MobileFinanceiroCard({
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        onClick={onEdit}
+        onClick={canEdit ? onEdit : onOpenReceipts}
         style={{
-          transform: swipeX > 0 ? `translateX(${swipeX}px)` : 'none',
+          transform: canEdit && swipeX > 0 ? `translateX(${swipeX}px)` : 'none',
           transition: isTracking ? 'none' : 'transform 0.2s ease-out'
         }}
         className={`relative z-10 p-4 space-y-3 bg-white transition-colors cursor-pointer ${
@@ -145,6 +150,7 @@ function MobileFinanceiroCard({
           <div>
             <h4 className="font-black text-slate-800 text-base flex items-center gap-1.5">
               {item.item}
+              {!canEdit && <span title="Somente leitura"><Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" /></span>}
             </h4>
             <div className="flex items-center gap-2 text-[11px] text-slate-500 font-semibold mt-1">
               <span>📅 {new Date(item.data + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
@@ -156,11 +162,12 @@ function MobileFinanceiroCard({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onToggleStatus();
+              if (canEdit) onToggleStatus();
             }}
-            className={`shrink-0 px-3 py-1 text-[10px] font-black uppercase rounded-full border transition-all active:scale-95 ${
+            disabled={!canEdit}
+            className={`shrink-0 px-3 py-1 text-[10px] font-black uppercase rounded-full border transition-all ${
               isPaid ? 'bg-green-50 border-green-200 text-green-700' : 'bg-yellow-50 border-yellow-200 text-yellow-700'
-            }`}
+            } ${!canEdit ? 'opacity-70 cursor-default' : 'active:scale-95'}`}
           >
             {isPaid ? 'Pago' : 'Pendente'}
           </button>
@@ -199,12 +206,20 @@ function MobileFinanceiroCard({
               <Paperclip className="w-3.5 h-3.5" />
               {receiptsCount}/3
             </button>
-            <button onClick={onEdit} className="p-2 bg-slate-100 text-slate-600 rounded-xl active:scale-95">
-              <Edit2 className="w-4 h-4" />
-            </button>
-            <button onClick={onDelete} className="p-2 bg-red-50 text-red-500 rounded-xl active:scale-95">
-              <Trash2 className="w-4 h-4" />
-            </button>
+            {canEdit ? (
+              <>
+                <button onClick={onEdit} className="p-2 bg-slate-100 text-slate-600 rounded-xl active:scale-95">
+                  <Edit2 className="w-4 h-4" />
+                </button>
+                <button onClick={onDelete} className="p-2 bg-red-50 text-red-500 rounded-xl active:scale-95">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </>
+            ) : (
+              <span className="flex items-center gap-1 text-[11px] text-slate-400 font-semibold italic bg-slate-100 px-2 py-1 rounded-xl">
+                <Lock className="w-3.5 h-3.5 text-slate-400" /> Leitura
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -215,6 +230,7 @@ function MobileFinanceiroCard({
 export default function FinanceiroView({
   financeiro,
   planejamento,
+  currentUser,
   onAddFinanceiro,
   onUpdateFinanceiro,
   onDeleteFinanceiro,
@@ -222,6 +238,34 @@ export default function FinanceiroView({
   onUpdatePlanejamento,
   onDeletePlanejamento
 }: FinanceiroViewProps) {
+  const isUserAdmin = currentUser?.login?.toLowerCase() === 'admin';
+
+  const getUserPagante = (): 'Wellington' | 'Raissa' => {
+    if (currentUser?.nome?.toLowerCase() === 'raissa' || currentUser?.login?.toLowerCase() === 'raissa') {
+      return 'Raissa';
+    }
+    return 'Wellington';
+  };
+
+  const userDefaultPagante = getUserPagante();
+
+  const canEditReal = (item: FinanceiroItem) => {
+    if (!currentUser) return false;
+    if (isUserAdmin) return true;
+    if (item.usuario_id && currentUser.id) {
+      return item.usuario_id === currentUser.id;
+    }
+    return item.pagante.toLowerCase() === userDefaultPagante.toLowerCase();
+  };
+
+  const canEditPlan = (item: PlanejamentoItem) => {
+    if (!currentUser) return false;
+    if (isUserAdmin) return true;
+    if (item.usuario_id && currentUser.id) {
+      return item.usuario_id === currentUser.id;
+    }
+    return true;
+  };
   // ── Main Tab Selection ──
   const [subTab, setSubTab] = useState<'planejamento' | 'reais'>('reais');
 
@@ -394,6 +438,7 @@ export default function FinanceiroView({
   };
 
   const openEditPlanForm = (p: PlanejamentoItem) => {
+    if (!canEditPlan(p)) return;
     setEditingPlanId(p.id);
     setPlanItem(p.item);
     setPlanMedida(p.unidade_medida || 'fixo');
@@ -422,7 +467,8 @@ export default function FinanceiroView({
       quantidade: parseFloat(planQtd) || undefined,
       preco_unitario: parseFloat(planPrecoUnit) || undefined,
       valor_estimado: val,
-      observacao: planObs.trim() || undefined
+      observacao: planObs.trim() || undefined,
+      usuario_id: currentUser?.id
     };
 
     if (editingPlanId) {
@@ -443,7 +489,7 @@ export default function FinanceiroView({
     setRealValorTotalFixo(p.valor_estimado ? p.valor_estimado.toString() : '');
     setRealValorPago('');
     setRealMeioPagamento('Pix');
-    setRealPagante('Wellington');
+    setRealPagante(userDefaultPagante);
     setRealData(new Date().toISOString().split('T')[0]);
     setRealParcelas(1);
     setRealObs(p.observacao ? `[Importado do Planejamento] ${p.observacao}` : '[Importado do Planejamento]');
@@ -464,7 +510,7 @@ export default function FinanceiroView({
     setRealValorTotalFixo('');
     setRealValorPago('');
     setRealMeioPagamento('Pix');
-    setRealPagante('Wellington');
+    setRealPagante(userDefaultPagante);
     setRealData(new Date().toISOString().split('T')[0]);
     setRealParcelas(1);
     setRealObs('');
@@ -473,6 +519,7 @@ export default function FinanceiroView({
   };
 
   const openEditRealForm = (item: FinanceiroItem) => {
+    if (!canEditReal(item)) return;
     setEditingRealId(item.id);
     setRealItem(item.item);
     setRealMedida(item.unidade_medida || 'fixo');
@@ -549,7 +596,8 @@ export default function FinanceiroView({
         total_parcelas: realParcelas,
         observacao: realObs.trim() || undefined,
         comprovantes: realComprovantes,
-        comprovante_url: realComprovantes[0] || undefined
+        comprovante_url: realComprovantes[0] || undefined,
+        usuario_id: currentUser?.id
       });
     } else {
       if (realParcelas > 1) {
@@ -579,6 +627,7 @@ export default function FinanceiroView({
             observacao: realObs.trim() || undefined,
             comprovantes: i === 1 ? realComprovantes : [],
             comprovante_url: i === 1 ? realComprovantes[0] : undefined,
+            usuario_id: currentUser?.id
           });
         }
         onAddFinanceiro(installmentItems);
@@ -606,6 +655,7 @@ export default function FinanceiroView({
   };
 
   const toggleFullPayment = (item: FinanceiroItem) => {
+    if (!canEditReal(item)) return;
     const isPaid = item.valor_pago >= item.valor_total;
     onUpdateFinanceiro(item.id, {
       valor_pago: isPaid ? 0 : item.valor_total
@@ -773,50 +823,64 @@ export default function FinanceiroView({
                       </td>
                     </tr>
                   ) : (
-                    sortedPlanejamento.map((p) => (
-                      <tr key={p.id} className="hover:bg-slate-50/60 transition-colors whitespace-nowrap">
-                        <td className="px-5 py-4 font-extrabold text-slate-800 text-[13px]">
-                          {p.item}
-                        </td>
-                        <td className="px-4 py-4 text-xs font-semibold text-slate-600">
-                          {formatQuantityDisplay(p.unidade_medida, p.quantidade, p.preco_unitario)}
-                        </td>
-                        <td className="px-4 py-4 text-xs font-black text-blue-900">
-                          {formatCurrency(p.valor_estimado)}
-                        </td>
-                        <td className="px-4 py-4 text-xs text-slate-500 truncate max-w-[240px]">
-                          {p.observacao || '-'}
-                        </td>
-                        <td className="px-5 py-4 text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            <button
-                              onClick={() => handleConvertPlanToReal(p)}
-                              className="flex items-center gap-1 px-2.5 py-1 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 text-[10px] font-extrabold rounded-xl transition-all cursor-pointer"
-                              title="Efetivar como Gasto Real"
-                            >
-                              <ArrowRight className="w-3 h-3" />
-                              Efetivar Gasto
-                            </button>
-                            <button
-                              onClick={() => openEditPlanForm(p)}
-                              className="p-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-xl transition-all cursor-pointer"
-                              title="Editar"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                if (confirm(`Excluir item ${p.item} do planejamento?`)) onDeletePlanejamento(p.id);
-                              }}
-                              className="p-1.5 bg-red-50 hover:bg-red-100 text-red-500 border border-red-100 rounded-xl transition-all cursor-pointer"
-                              title="Excluir"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                    sortedPlanejamento.map((p) => {
+                      const canEdit = canEditPlan(p);
+                      return (
+                        <tr key={p.id} className="hover:bg-slate-50/60 transition-colors whitespace-nowrap">
+                          <td className="px-5 py-4 font-extrabold text-slate-800 text-[13px]">
+                            <span className="flex items-center gap-1.5">
+                              {p.item}
+                              {!canEdit && <span title="Somente leitura"><Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" /></span>}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4 text-xs font-semibold text-slate-600">
+                            {formatQuantityDisplay(p.unidade_medida, p.quantidade, p.preco_unitario)}
+                          </td>
+                          <td className="px-4 py-4 text-xs font-black text-blue-900">
+                            {formatCurrency(p.valor_estimado)}
+                          </td>
+                          <td className="px-4 py-4 text-xs text-slate-500 truncate max-w-[240px]">
+                            {p.observacao || '-'}
+                          </td>
+                          <td className="px-5 py-4 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => handleConvertPlanToReal(p)}
+                                className="flex items-center gap-1 px-2.5 py-1 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 text-[10px] font-extrabold rounded-xl transition-all cursor-pointer"
+                                title="Efetivar como Gasto Real"
+                              >
+                                <ArrowRight className="w-3 h-3" />
+                                Efetivar Gasto
+                              </button>
+                              {canEdit ? (
+                                <>
+                                  <button
+                                    onClick={() => openEditPlanForm(p)}
+                                    className="p-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-xl transition-all cursor-pointer"
+                                    title="Editar"
+                                  >
+                                    <Edit2 className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      if (confirm(`Excluir item ${p.item} do planejamento?`)) onDeletePlanejamento(p.id);
+                                    }}
+                                    className="p-1.5 bg-red-50 hover:bg-red-100 text-red-500 border border-red-100 rounded-xl transition-all cursor-pointer"
+                                    title="Excluir"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </>
+                              ) : (
+                                <span className="flex items-center gap-1 text-[10px] text-slate-400 font-semibold italic">
+                                  <Lock className="w-3.5 h-3.5 text-slate-400" /> Leitura
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
@@ -830,42 +894,54 @@ export default function FinanceiroView({
                 <p className="font-bold text-sm">Nenhum item orçado</p>
               </div>
             ) : (
-              sortedPlanejamento.map((p) => (
-                <div key={p.id} className="glass-card rounded-2xl p-4 border border-slate-200/80 bg-white space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h4 className="font-black text-slate-800 text-base">{p.item}</h4>
-                      <p className="text-xs text-slate-500 font-semibold mt-0.5">
-                        Medida: {formatQuantityDisplay(p.unidade_medida, p.quantidade, p.preco_unitario)}
+              sortedPlanejamento.map((p) => {
+                const canEdit = canEditPlan(p);
+                return (
+                  <div key={p.id} className="glass-card rounded-2xl p-4 border border-slate-200/80 bg-white space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h4 className="font-black text-slate-800 text-base flex items-center gap-1.5">
+                          {p.item}
+                          {!canEdit && <span title="Somente leitura"><Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" /></span>}
+                        </h4>
+                        <p className="text-xs text-slate-500 font-semibold mt-0.5">
+                          Medida: {formatQuantityDisplay(p.unidade_medida, p.quantidade, p.preco_unitario)}
+                        </p>
+                      </div>
+                      <span className="text-sm font-black text-blue-900">{formatCurrency(p.valor_estimado)}</span>
+                    </div>
+
+                    {p.observacao && (
+                      <p className="text-xs bg-slate-50 p-2 rounded-xl text-slate-600 italic">
+                        {p.observacao}
                       </p>
-                    </div>
-                    <span className="text-sm font-black text-blue-900">{formatCurrency(p.valor_estimado)}</span>
-                  </div>
+                    )}
 
-                  {p.observacao && (
-                    <p className="text-xs bg-slate-50 p-2 rounded-xl text-slate-600 italic">
-                      {p.observacao}
-                    </p>
-                  )}
-
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                    <button
-                      onClick={() => handleConvertPlanToReal(p)}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white text-[11px] font-bold rounded-xl active:scale-95"
-                    >
-                      Efetivar Gasto <ArrowRight className="w-3 h-3" />
-                    </button>
-                    <div className="flex gap-2">
-                      <button onClick={() => openEditPlanForm(p)} className="p-2 bg-slate-100 text-slate-600 rounded-xl">
-                        <Edit2 className="w-4 h-4" />
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                      <button
+                        onClick={() => handleConvertPlanToReal(p)}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white text-[11px] font-bold rounded-xl active:scale-95"
+                      >
+                        Efetivar Gasto <ArrowRight className="w-3 h-3" />
                       </button>
-                      <button onClick={() => { if (confirm(`Excluir ${p.item}?`)) onDeletePlanejamento(p.id); }} className="p-2 bg-red-50 text-red-500 rounded-xl">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {canEdit ? (
+                        <div className="flex gap-2">
+                          <button onClick={() => openEditPlanForm(p)} className="p-2 bg-slate-100 text-slate-600 rounded-xl">
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => { if (confirm(`Excluir ${p.item}?`)) onDeletePlanejamento(p.id); }} className="p-2 bg-red-50 text-red-500 rounded-xl">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="flex items-center gap-1 text-[11px] text-slate-400 font-semibold italic bg-slate-100 px-2.5 py-1 rounded-xl">
+                          <Lock className="w-3.5 h-3.5" /> Leitura
+                        </span>
+                      )}
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -1056,11 +1132,15 @@ export default function FinanceiroView({
                     sortedFinanceiro.map((item) => {
                       const isPaid = item.valor_pago >= item.valor_total;
                       const receiptsCount = item.comprovantes?.length || (item.comprovante_url ? 1 : 0);
+                      const canEdit = canEditReal(item);
 
                       return (
                         <tr
                           key={item.id}
-                          onClick={() => openEditRealForm(item)}
+                          onClick={() => {
+                            if (canEdit) openEditRealForm(item);
+                            else setReceiptModalItem(item);
+                          }}
                           className="hover:bg-slate-50/80 transition-colors whitespace-nowrap cursor-pointer"
                         >
                           {/* 1. Data */}
@@ -1077,6 +1157,7 @@ export default function FinanceiroView({
                           <td className="px-5 py-4">
                             <div className="font-extrabold text-slate-800 text-[13px] truncate max-w-[200px] flex items-center gap-1.5">
                               {item.item}
+                              {!canEdit && <span title="Somente leitura"><Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" /></span>}
                               {receiptsCount > 0 && (
                                 <span className="text-[10px] bg-blue-50 text-sonic-sky font-bold px-1.5 py-0.5 rounded-md flex items-center gap-0.5" title={`${receiptsCount} comprovante(s)`}>
                                   <Paperclip className="w-3 h-3" />
@@ -1126,13 +1207,14 @@ export default function FinanceiroView({
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                toggleFullPayment(item);
+                                if (canEdit) toggleFullPayment(item);
                               }}
-                              className={`inline-flex px-2.5 py-1 text-[10px] font-black uppercase rounded-full border cursor-pointer select-none transition-all active:scale-95 ${
+                              disabled={!canEdit}
+                              className={`inline-flex px-2.5 py-1 text-[10px] font-black uppercase rounded-full border select-none transition-all ${
                                 isPaid
                                   ? 'bg-green-50 border-green-200 text-green-700'
                                   : 'bg-yellow-50 border-yellow-200 text-yellow-700'
-                              }`}
+                              } ${!canEdit ? 'opacity-70 cursor-default' : 'active:scale-95 cursor-pointer'}`}
                             >
                               {isPaid ? 'Pago' : 'Pendente'}
                             </button>
@@ -1140,30 +1222,35 @@ export default function FinanceiroView({
 
                           {/* 9. Ações */}
                           <td className="px-5 py-4 text-center" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center justify-center gap-1.5">
-                              <button
-                                onClick={() => openEditRealForm(item)}
-                                className="p-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-xl transition-all cursor-pointer"
-                                title="Ver Detalhes / Editar"
-                              >
-                                <Edit2 className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  if (confirm(`Excluir gasto ${item.item}?`)) onDeleteFinanceiro(item.id);
-                                }}
-                                className="p-1.5 bg-red-50 hover:bg-red-100 text-red-500 border border-red-100 rounded-xl transition-all cursor-pointer"
-                                title="Excluir"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
+                            {canEdit ? (
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button
+                                  onClick={() => openEditRealForm(item)}
+                                  className="p-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-xl transition-all cursor-pointer"
+                                  title="Ver Detalhes / Editar"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (confirm(`Excluir gasto ${item.item}?`)) onDeleteFinanceiro(item.id);
+                                  }}
+                                  className="p-1.5 bg-red-50 hover:bg-red-100 text-red-500 border border-red-100 rounded-xl transition-all cursor-pointer"
+                                  title="Excluir"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="flex items-center justify-center gap-1 text-[10px] text-slate-400 font-semibold italic">
+                                <Lock className="w-3.5 h-3.5 text-slate-400" /> Leitura
+                              </span>
+                            )}
                           </td>
                         </tr>
                       );
                     })
                   )}
-
                 </tbody>
               </table>
             </div>
@@ -1180,6 +1267,7 @@ export default function FinanceiroView({
                 <MobileFinanceiroCard
                   key={item.id}
                   item={item}
+                  canEdit={canEditReal(item)}
                   onEdit={() => openEditRealForm(item)}
                   onDelete={() => {
                     if (confirm(`Excluir gasto ${item.item}?`)) onDeleteFinanceiro(item.id);

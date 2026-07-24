@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Calendar, Users, DollarSign, Clock } from 'lucide-react';
+import { Calendar, Users, DollarSign, Clock, User, Baby, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Convidado, FinanceiroItem } from '@/utils/supabase';
 
 interface DashboardProps {
@@ -38,6 +38,7 @@ export default function DashboardView({ config, convidados, financeiro }: Dashbo
   // Calculations for guests
   const totalConvidados = convidados.length;
   const confirmados = convidados.filter(c => c.confirmado).length;
+  const pendentesConvidados = totalConvidados - confirmados;
   const criancas = convidados.filter(c => c.tipo === 'Criança').length;
   const adultos = totalConvidados - criancas;
 
@@ -114,57 +115,113 @@ export default function DashboardView({ config, convidados, financeiro }: Dashbo
 
         {/* Right Side: Quick Stats and Progress */}
         <div className="space-y-6">
-          {/* Estatísticas Rápidas */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Estatísticas Rápidas - Cards Modernos */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
             {/* Card Convidados */}
-            <div className="glass-card rounded-3xl p-4 shadow-sm border border-slate-100 flex flex-col justify-between relative overflow-hidden">
-              {/* Decorative Ring Background */}
-              <div className="absolute right-2 top-2 w-12 h-12 border-2 border-yellow-400/20 rounded-full"></div>
-              
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-2.5 bg-blue-50 text-sonic-blue rounded-2xl">
-                  <Users className="w-5 h-5" />
+            <div className="glass-card rounded-3xl p-5 shadow-lg border border-slate-200/60 bg-white/90 backdrop-blur-md flex flex-col justify-between space-y-4 hover:shadow-xl transition-all">
+              {/* Header: Label e Total Principal */}
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-md shadow-blue-500/20">
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Lista de Convidados</span>
+                    <div className="text-2xl font-black text-slate-900 tracking-tight flex items-baseline gap-1 mt-0.5">
+                      {totalConvidados} <span className="text-xs font-extrabold text-slate-400">pessoas</span>
+                    </div>
+                  </div>
                 </div>
-                <span className="text-[11px] font-bold px-2 py-0.5 bg-green-100 text-green-700 rounded-full">
-                  {confirmados} ok
-                </span>
               </div>
-              <div>
-                <div className="text-2xl font-black text-slate-800 tracking-tight">{totalConvidados}</div>
-                <div className="text-xs font-bold text-slate-500">Convidados</div>
-                
-                <div className="mt-2 pt-2 border-t border-slate-100 flex gap-2 text-[10px] text-slate-400">
-                  <span>{adultos} Ad.</span>
-                  <span>•</span>
-                  <span>{criancas} Crianças</span>
+
+              {/* Barra de Progresso de Confirmação */}
+              <div className="space-y-1">
+                <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                  <span>Confirmações</span>
+                  <span className="text-emerald-600 font-extrabold">
+                    {totalConvidados > 0 ? Math.round((confirmados / totalConvidados) * 100) : 0}% confirmado
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
+                    style={{ width: `${totalConvidados > 0 ? (confirmados / totalConvidados) * 100 : 0}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Grid 4 Mini Métricas sem texto em Adultos/Crianças */}
+              <div className="grid grid-cols-4 gap-1.5 pt-1 text-xs whitespace-nowrap">
+                <div className="bg-slate-50 border border-slate-100 px-2 py-2 rounded-xl flex items-center justify-center gap-1" title="Adultos">
+                  <User className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                  <span className="font-black text-slate-800 text-xs">{adultos}</span>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-100 px-2 py-2 rounded-xl flex items-center justify-center gap-1" title="Crianças">
+                  <Baby className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+                  <span className="font-black text-slate-800 text-xs">{criancas}</span>
+                </div>
+
+                <div className="bg-emerald-50/90 border border-emerald-200/80 px-2 py-2 rounded-xl flex items-center justify-center gap-1 text-emerald-800" title="Confirmados">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span className="font-black text-emerald-900 text-xs">{confirmados}</span>
+                </div>
+
+                <div className="bg-amber-50/90 border border-amber-200/80 px-2 py-2 rounded-xl flex items-center justify-center gap-1 text-amber-800" title="Pendentes">
+                  <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  <span className="font-black text-amber-900 text-xs">{pendentesConvidados}</span>
                 </div>
               </div>
             </div>
 
-            {/* Card Financeiro */}
-            <div className="glass-card rounded-3xl p-4 shadow-sm border border-slate-100 flex flex-col justify-between relative overflow-hidden">
-              {/* Decorative Ring Background */}
-              <div className="absolute right-2 top-2 w-12 h-12 border-2 border-yellow-400/20 rounded-full"></div>
-
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-2.5 bg-yellow-50 text-ring-gold rounded-2xl">
-                  <DollarSign className="w-5 h-5" />
+            {/* Card Orçamento */}
+            <div className="glass-card rounded-3xl p-5 shadow-lg border border-slate-200/60 bg-white/90 backdrop-blur-md flex flex-col justify-between space-y-4 hover:shadow-xl transition-all">
+              {/* Header: Label e Valor Total */}
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-yellow-500 text-white rounded-2xl flex items-center justify-center shadow-md shadow-yellow-500/20">
+                    <DollarSign className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Orçamento Previsto</span>
+                    <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-none mt-0.5 whitespace-nowrap">
+                      {formatCurrency(totalOrcado)}
+                    </div>
+                  </div>
                 </div>
-                <span className="text-[11px] font-bold px-2 py-0.5 bg-red-50 text-red-600 rounded-full">
-                  {formatCurrency(totalPendente)}
-                </span>
               </div>
-              <div>
-                <div className="text-xl font-black text-slate-800 tracking-tight">
-                  {formatCurrency(totalOrcado)}
-                </div>
-                <div className="text-xs font-bold text-slate-500">Orçamento Total</div>
 
-                <div className="mt-2 pt-2 border-t border-slate-100 flex gap-2 text-[10px] text-slate-400">
-                  <span className="text-green-600 font-semibold">{formatCurrency(totalPago)} pago</span>
+              {/* Barra de Progresso Financeiro */}
+              <div className="space-y-1">
+                <div className="flex justify-between text-[10px] font-bold text-slate-500 whitespace-nowrap">
+                  <span>Progresso de Pagamentos</span>
+                  <span className="text-emerald-600 font-extrabold">
+                    {totalOrcado > 0 ? Math.round((totalPago / totalOrcado) * 100) : 0}% pago
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-emerald-500 to-green-400 rounded-full transition-all duration-500"
+                    style={{ width: `${totalOrcado > 0 ? (totalPago / totalOrcado) * 100 : 0}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Sub-métricas Financeiras sem truncamento com fonte ajustada */}
+              <div className="grid grid-cols-2 gap-1.5 pt-1 text-xs whitespace-nowrap">
+                <div className="bg-emerald-50/90 border border-emerald-200/80 px-2 py-2 rounded-xl flex items-center justify-center gap-1 text-[10px] sm:text-[11px]" title="Total Pago">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span className="font-black text-emerald-900">{formatCurrency(totalPago)}</span>
+                </div>
+
+                <div className="bg-rose-50/90 border border-rose-200/80 px-2 py-2 rounded-xl flex items-center justify-center gap-1 text-[10px] sm:text-[11px]" title="Total Pendente">
+                  <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                  <span className="font-black text-rose-900">{formatCurrency(totalPendente)}</span>
                 </div>
               </div>
             </div>
+
           </div>
 
           {/* Relação de Pagantes e Criadores */}

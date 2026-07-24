@@ -72,11 +72,6 @@ export default function ForcePasswordChangeView({ user, onPasswordChanged }: For
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-100 px-4 green-hill-pattern">
       <div className="w-full max-w-md glass-card rounded-3xl p-8 border border-slate-200/50 shadow-2xl relative overflow-hidden">
-        
-        {/* Decorative elements */}
-        <div className="absolute -top-12 -right-12 w-32 h-32 border-8 border-yellow-400/20 rounded-full animate-spin-slow"></div>
-        <div className="absolute -bottom-10 -left-10 w-24 h-24 border-4 border-red-500/10 rounded-full"></div>
-
         <div className="relative z-10 flex flex-col items-center mb-6 text-center">
           <div className="w-14 h-14 bg-yellow-50 text-yellow-500 rounded-full flex items-center justify-center mb-4 border border-yellow-200">
             <Lock className="w-6 h-6 animate-bounce" />
