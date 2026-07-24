@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Search, Plus, Trash2, Edit2, Check, X, Star, UserCheck, User, ChevronLeft } from 'lucide-react';
-import { Convidado } from '@/utils/supabase';
+import { Search, Plus, Trash2, Edit2, Check, X, Star, UserCheck, User, ChevronLeft, ArrowUpDown, Lock } from 'lucide-react';
+import { Convidado, Usuario } from '@/utils/supabase';
 
 // ─────────────────────────────────────────────────────────
 // CONSTANTS
@@ -134,6 +134,7 @@ const DEFAULT_FORM: GuestFormData = {
 
 interface ConvidadosViewProps {
   convidados: Convidado[];
+  currentUser?: Usuario | null;
   onAdd: (convidado: Omit<Convidado, 'id' | 'criado_em'>) => Promise<void> | void;
   onUpdate: (id: string, updates: Partial<Convidado>) => Promise<void> | void;
   onDelete: (id: string) => Promise<void> | void;
@@ -156,6 +157,8 @@ function MobileBottomSheet({
   isOpen,
   mode,
   initialData,
+  isUserAdmin,
+  userDefaultConvidadoPor,
   onClose,
   onSave,
   onDelete,
@@ -163,6 +166,8 @@ function MobileBottomSheet({
   isOpen: boolean;
   mode: 'add' | 'edit';
   initialData?: GuestFormData;
+  isUserAdmin: boolean;
+  userDefaultConvidadoPor: 'Wellington' | 'Raissa';
   onClose: () => void;
   onSave: (data: GuestFormData) => void;
   onDelete?: () => void;
@@ -171,9 +176,10 @@ function MobileBottomSheet({
 
   // Re-populate form when sheet opens
   useEffect(() => {
-    if (isOpen) setForm(initialData ?? DEFAULT_FORM);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+    if (isOpen) {
+      setForm(initialData ?? { ...DEFAULT_FORM, convidado_por: userDefaultConvidadoPor });
+    }
+  }, [isOpen, initialData, userDefaultConvidadoPor]);
 
   const update = <K extends keyof GuestFormData>(field: K, value: GuestFormData[K]) =>
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -263,8 +269,11 @@ function MobileBottomSheet({
               </label>
               <select
                 value={form.convidado_por}
+                disabled={!isUserAdmin}
                 onChange={(e) => update('convidado_por', e.target.value as 'Wellington' | 'Raissa')}
-                className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-200 rounded-2xl text-sm font-bold text-slate-700 focus:outline-none focus:border-sonic-blue appearance-none"
+                className={`w-full px-4 py-4 bg-slate-50 border-2 border-slate-200 rounded-2xl text-sm font-bold text-slate-700 focus:outline-none appearance-none ${
+                  !isUserAdmin ? 'opacity-70 cursor-not-allowed bg-slate-100' : 'focus:border-sonic-blue'
+                }`}
               >
                 <option value="Wellington">Wellington</option>
                 <option value="Raissa">Raissa</option>
@@ -392,14 +401,18 @@ function MobileBottomSheet({
 // ─────────────────────────────────────────────────────────
 function MobileGuestCard({
   convidado,
+  canEdit,
   onEdit,
   onDelete,
   onToggleStatus,
+  onSetConfirmed,
 }: {
   convidado: Convidado;
+  canEdit: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onToggleStatus: () => void;
+  onSetConfirmed: () => void;
 }) {
   const [swipeX, setSwipeX] = useState(0);
   const [isRevealed, setIsRevealed] = useState(false);
@@ -437,10 +450,16 @@ function MobileGuestCard({
       }
     }
 
+    if (!canEdit) return;
+
     if (isRevealed) {
-      if (dx > 0) setSwipeX(Math.min(dx - THRESHOLD, 0));
+      if (dx > 0) setSwipeX(Math.min(-THRESHOLD + dx, 0));
     } else {
-      if (dx < 0) setSwipeX(Math.max(dx, -THRESHOLD));
+      if (dx < 0) {
+        setSwipeX(Math.max(dx, -THRESHOLD));
+      } else if (dx > 0) {
+        setSwipeX(Math.min(dx, THRESHOLD));
+      }
     }
   };
 
@@ -465,23 +484,36 @@ function MobileGuestCard({
 
   return (
     <div className="relative rounded-2xl overflow-hidden mb-2.5 shadow-sm">
-      {/* Background action buttons revealed on swipe */}
-      <div className="absolute inset-y-0 right-0 flex" style={{ width: THRESHOLD }}>
-        <button
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => { e.stopPropagation(); snapTo(false); onEdit(); }}
-          className="flex-1 flex items-center justify-center bg-sonic-blue text-white"
+      {/* Background action for Swipe Right: Confirmar (Left side) */}
+      {canEdit && (
+        <div
+          className="absolute inset-y-0 left-0 flex items-center justify-start pl-5 bg-green-500 text-white rounded-l-2xl font-bold text-xs gap-1.5"
+          style={{ width: THRESHOLD * 1.5 }}
         >
-          <Edit2 className="w-5 h-5" />
-        </button>
-        <button
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => { e.stopPropagation(); snapTo(false); onDelete(); }}
-          className="flex-1 flex items-center justify-center bg-red-500 text-white rounded-r-2xl"
-        >
-          <Trash2 className="w-5 h-5" />
-        </button>
-      </div>
+          <Check className="w-5 h-5 shrink-0" />
+          <span className="font-extrabold uppercase text-[10px]">Confirmar</span>
+        </div>
+      )}
+
+      {/* Background action buttons revealed on swipe left (Right side) */}
+      {canEdit && (
+        <div className="absolute inset-y-0 right-0 flex" style={{ width: THRESHOLD }}>
+          <button
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); snapTo(false); onEdit(); }}
+            className="flex-1 flex items-center justify-center bg-sonic-blue text-white"
+          >
+            <Edit2 className="w-5 h-5" />
+          </button>
+          <button
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); snapTo(false); onDelete(); }}
+            className="flex-1 flex items-center justify-center bg-red-500 text-white rounded-r-2xl"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+        </div>
+      )}
 
       {/* Card content — slides left on swipe */}
       <div
@@ -514,7 +546,10 @@ function MobileGuestCard({
                 </span>
               </div>
               <div className="flex items-center gap-3 text-[11px] text-slate-500 font-semibold">
-                <span>👤 {convidado.convidado_por}</span>
+                <span className="flex items-center gap-1" title={!canEdit ? "Somente leitura" : undefined}>
+                  👤 {convidado.convidado_por}
+                  {!canEdit && <Lock className="w-3 h-3 text-slate-400" />}
+                </span>
                 <span className="flex items-center gap-0.5">
                   {Array.from({ length: getStarCount(convidado.prioridade) }).map((_, i) => (
                     <Star key={i} className="w-2.5 h-2.5 fill-yellow-400 text-yellow-400" />
@@ -526,8 +561,14 @@ function MobileGuestCard({
             {/* Right: quick-toggle status button */}
             <button
               onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => { e.stopPropagation(); onToggleStatus(); }}
-              className={`shrink-0 px-3 py-1.5 text-[10px] font-black uppercase rounded-full border transition-all active:scale-95 ${
+              onClick={(e) => {
+                e.stopPropagation();
+                if (canEdit) onToggleStatus();
+              }}
+              disabled={!canEdit}
+              className={`shrink-0 px-3 py-1.5 text-[10px] font-black uppercase rounded-full border transition-all ${
+                !canEdit ? 'opacity-60 cursor-not-allowed' : 'active:scale-95 cursor-pointer'
+              } ${
                 convidado.confirmado
                   ? 'bg-green-50 border-green-200 text-green-700'
                   : 'bg-yellow-50 border-yellow-200 text-yellow-700'
@@ -564,11 +605,33 @@ function MobileGuestCard({
 // ─────────────────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────
-export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }: ConvidadosViewProps) {
+type SortField = 'nome' | 'tipo' | 'convidado_por' | 'prioridade' | 'status';
+type SortDir = 'asc' | 'desc';
+
+export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdate, onDelete }: ConvidadosViewProps) {
+  const isUserAdmin = currentUser?.login?.toLowerCase() === 'admin';
+
+  const getUserConvidadoPor = (): 'Wellington' | 'Raissa' => {
+    if (currentUser?.nome?.toLowerCase() === 'raissa' || currentUser?.login?.toLowerCase() === 'raissa') {
+      return 'Raissa';
+    }
+    return 'Wellington';
+  };
+
+  const userDefaultConvidadoPor = getUserConvidadoPor();
+
+  const canEditGuest = (guestConvidadoPor: string) => {
+    if (!currentUser) return false;
+    if (isUserAdmin) return true;
+    return guestConvidadoPor.toLowerCase() === userDefaultConvidadoPor.toLowerCase();
+  };
+
   // ── Shared filter state ──
   const [search, setSearch] = useState('');
   const [filterConfirmado, setFilterConfirmado] = useState<'todos' | 'confirmados' | 'pendentes'>('todos');
   const [filterConvidadoPor, setFilterConvidadoPor] = useState<'todos' | 'Wellington' | 'Raissa'>('todos');
+  const [sortField, setSortField] = useState<SortField>('nome');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
 
   // ── Desktop: Excel-style editing ──
   const [newRows, setNewRows] = useState<NewGuestRow[]>([]);
@@ -589,6 +652,15 @@ export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }
     return 1;
   };
 
+  const handleSortChange = (field: SortField) => {
+    if (field === sortField) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDir('asc');
+    }
+  };
+
   const filtered = convidados.filter((c) => {
     const matchesSearch = c.nome.toLowerCase().includes(search.toLowerCase());
     const matchesConfirmado =
@@ -599,13 +671,31 @@ export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }
     return matchesSearch && matchesConfirmado && matchesConvidadoPor;
   });
 
+  const sorted = [...filtered].sort((a, b) => {
+    const dir = sortDir === 'asc' ? 1 : -1;
+    switch (sortField) {
+      case 'nome':
+        return dir * a.nome.localeCompare(b.nome, 'pt-BR');
+      case 'tipo':
+        return dir * a.tipo.localeCompare(b.tipo, 'pt-BR');
+      case 'convidado_por':
+        return dir * a.convidado_por.localeCompare(b.convidado_por, 'pt-BR');
+      case 'prioridade':
+        return dir * (a.prioridade - b.prioridade);
+      case 'status':
+        return dir * (Number(a.confirmado) - Number(b.confirmado));
+      default:
+        return 0;
+    }
+  });
+
   // ── Desktop: New row ──
   const handleAddNewRow = () => {
     const newRow: NewGuestRow = {
       tempId: Math.random().toString(36).substring(2, 9),
       nome: '',
       tipo: 'Adulto',
-      convidado_por: 'Wellington',
+      convidado_por: userDefaultConvidadoPor,
       prioridade: 1,
       participacoes: [],
       confirmado: false,
@@ -748,7 +838,7 @@ export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }
                 onChange={(e) => setFilterConfirmado(e.target.value as 'todos' | 'confirmados' | 'pendentes')}
                 className="w-full pl-8 pr-6 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 focus:outline-none shadow-sm appearance-none cursor-pointer"
               >
-                <option value="todos">Todos</option>
+                <option value="todos">Status</option>
                 <option value="confirmados">Confirmado</option>
                 <option value="pendentes">Pendente</option>
               </select>
@@ -763,35 +853,57 @@ export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }
                 onChange={(e) => setFilterConvidadoPor(e.target.value as 'todos' | 'Wellington' | 'Raissa')}
                 className="w-full pl-8 pr-6 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 focus:outline-none shadow-sm appearance-none cursor-pointer"
               >
-                <option value="todos">Todos</option>
+                <option value="todos">Convidado por</option>
                 <option value="Wellington">Wellington</option>
                 <option value="Raissa">Raissa</option>
               </select>
               <span className="absolute right-3 top-3.5 text-[9px] text-slate-400 pointer-events-none">▼</span>
             </div>
           </div>
+
+          {/* Sort / Ordenação */}
+          <div className="relative">
+            <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 absolute left-4 top-3.5 pointer-events-none" />
+            <select
+              value={sortField}
+              onChange={(e) => handleSortChange(e.target.value as SortField)}
+              className="w-full pl-10 pr-8 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 focus:outline-none shadow-sm appearance-none cursor-pointer"
+            >
+              <option value="nome">Ordenar: Nome</option>
+              <option value="tipo">Ordenar: Tipo</option>
+              <option value="convidado_por">Ordenar: Convidado por</option>
+              <option value="prioridade">Ordenar: Prioridade</option>
+              <option value="status">Ordenar: Status</option>
+            </select>
+            <span className="absolute right-3 top-3.5 text-[9px] text-slate-400 pointer-events-none">{sortDir === 'asc' ? '↑' : '↓'}</span>
+          </div>
         </div>
 
         {/* Card list */}
         <div>
-          {filtered.length === 0 ? (
+          {sorted.length === 0 ? (
             <div className="text-center py-16 text-slate-400">
               <p className="text-5xl mb-3">👥</p>
               <p className="font-bold text-sm">Nenhum convidado encontrado</p>
               <p className="text-xs mt-1">Tente ajustar os filtros ou adicione um convidado</p>
             </div>
           ) : (
-            filtered.map((c) => (
-              <MobileGuestCard
-                key={c.id}
-                convidado={c}
-                onEdit={() => openMobileEdit(c)}
-                onDelete={() => {
-                  if (confirm(`Excluir ${c.nome}?`)) onDelete(c.id);
-                }}
-                onToggleStatus={() => onUpdate(c.id, { confirmado: !c.confirmado })}
-              />
-            ))
+            sorted.map((c) => {
+              const canEdit = canEditGuest(c.convidado_por);
+              return (
+                <MobileGuestCard
+                  key={c.id}
+                  convidado={c}
+                  canEdit={canEdit}
+                  onEdit={() => openMobileEdit(c)}
+                  onDelete={() => {
+                    if (confirm(`Excluir ${c.nome}?`)) onDelete(c.id);
+                  }}
+                  onToggleStatus={() => onUpdate(c.id, { confirmado: !c.confirmado })}
+                  onSetConfirmed={() => onUpdate(c.id, { confirmado: true })}
+                />
+              );
+            })
           )}
           <div className="h-6" />
         </div>
@@ -810,6 +922,8 @@ export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }
           isOpen={mobileSheet.open}
           mode={mobileSheet.mode}
           initialData={mobileSheet.initialData}
+          isUserAdmin={isUserAdmin}
+          userDefaultConvidadoPor={userDefaultConvidadoPor}
           onClose={closeMobileSheet}
           onSave={handleMobileSheetSave}
           onDelete={mobileSheet.mode === 'edit' ? handleMobileDelete : undefined}
@@ -895,12 +1009,42 @@ export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }
             <table className="w-full text-left border-collapse min-w-[700px]">
               <thead className="sticky top-0 z-10 bg-slate-900">
                 <tr className="bg-slate-900 text-white text-[10px] uppercase font-bold tracking-wider whitespace-nowrap">
-                  <th className="px-5 py-4 w-40">Nome</th>
-                  <th className="px-4 py-4 w-28">Tipo</th>
-                  <th className="px-4 py-4 w-32">De</th>
-                  <th className="px-4 py-4 w-24">Prioridade</th>
+                  <th className="px-5 py-4 w-40">
+                    <button onClick={() => handleSortChange('nome')} className="flex items-center gap-1.5 cursor-pointer hover:text-yellow-300 transition-colors">
+                      Nome
+                      <ArrowUpDown className={`w-3 h-3 ${sortField === 'nome' ? 'text-yellow-400' : 'text-slate-500'}`} />
+                      {sortField === 'nome' && <span className="text-yellow-400 text-[8px]">{sortDir === 'asc' ? '↑' : '↓'}</span>}
+                    </button>
+                  </th>
+                  <th className="px-4 py-4 w-28">
+                    <button onClick={() => handleSortChange('tipo')} className="flex items-center gap-1.5 cursor-pointer hover:text-yellow-300 transition-colors">
+                      Tipo
+                      <ArrowUpDown className={`w-3 h-3 ${sortField === 'tipo' ? 'text-yellow-400' : 'text-slate-500'}`} />
+                      {sortField === 'tipo' && <span className="text-yellow-400 text-[8px]">{sortDir === 'asc' ? '↑' : '↓'}</span>}
+                    </button>
+                  </th>
+                  <th className="px-4 py-4 w-32">
+                    <button onClick={() => handleSortChange('convidado_por')} className="flex items-center gap-1.5 cursor-pointer hover:text-yellow-300 transition-colors">
+                      De
+                      <ArrowUpDown className={`w-3 h-3 ${sortField === 'convidado_por' ? 'text-yellow-400' : 'text-slate-500'}`} />
+                      {sortField === 'convidado_por' && <span className="text-yellow-400 text-[8px]">{sortDir === 'asc' ? '↑' : '↓'}</span>}
+                    </button>
+                  </th>
+                  <th className="px-4 py-4 w-24">
+                    <button onClick={() => handleSortChange('prioridade')} className="flex items-center gap-1.5 cursor-pointer hover:text-yellow-300 transition-colors">
+                      Prioridade
+                      <ArrowUpDown className={`w-3 h-3 ${sortField === 'prioridade' ? 'text-yellow-400' : 'text-slate-500'}`} />
+                      {sortField === 'prioridade' && <span className="text-yellow-400 text-[8px]">{sortDir === 'asc' ? '↑' : '↓'}</span>}
+                    </button>
+                  </th>
                   <th className="px-4 py-4 w-96">Participações</th>
-                  <th className="px-4 py-4 w-28 text-center">Status</th>
+                  <th className="px-4 py-4 w-28 text-center">
+                    <button onClick={() => handleSortChange('status')} className="flex items-center gap-1.5 cursor-pointer hover:text-yellow-300 transition-colors mx-auto">
+                      Status
+                      <ArrowUpDown className={`w-3 h-3 ${sortField === 'status' ? 'text-yellow-400' : 'text-slate-500'}`} />
+                      {sortField === 'status' && <span className="text-yellow-400 text-[8px]">{sortDir === 'asc' ? '↑' : '↓'}</span>}
+                    </button>
+                  </th>
                   <th className="px-5 py-4 w-32 text-center">Ações</th>
                 </tr>
               </thead>
@@ -933,8 +1077,11 @@ export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }
                     <td className="px-4 py-3">
                       <select
                         value={row.convidado_por}
+                        disabled={!isUserAdmin}
                         onChange={(e) => handleUpdateNewRowField(row.tempId, 'convidado_por', e.target.value)}
-                        className="w-full bg-white border border-yellow-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-700 focus:outline-none"
+                        className={`w-full bg-white border border-yellow-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-700 focus:outline-none ${
+                          !isUserAdmin ? 'opacity-70 cursor-not-allowed bg-slate-100' : ''
+                        }`}
                       >
                         <option value="Wellington">Wellington</option>
                         <option value="Raissa">Raissa</option>
@@ -987,18 +1134,19 @@ export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }
                 ))}
 
                 {/* Existing convidados */}
-                {filtered.length === 0 && newRows.length === 0 ? (
+                {sorted.length === 0 && newRows.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="text-center py-10 text-slate-400 font-semibold bg-white">
                       Nenhum convidado encontrado.
                     </td>
                   </tr>
                 ) : (
-                  filtered.map((c) => {
+                  sorted.map((c) => {
+                    const canEdit = canEditGuest(c.convidado_por);
                     const isEditing = editingRows[c.id] !== undefined;
                     const editingRow = editingRows[c.id];
 
-                    if (isEditing && editingRow) {
+                    if (isEditing && editingRow && canEdit) {
                       return (
                         <tr key={c.id} className="bg-blue-50/30 hover:bg-blue-50/50 transition-colors whitespace-nowrap">
                           <td className="px-5 py-3">
@@ -1023,8 +1171,11 @@ export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }
                           <td className="px-4 py-3">
                             <select
                               value={editingRow.convidado_por}
+                              disabled={!isUserAdmin}
                               onChange={(e) => handleUpdateEditField(c.id, 'convidado_por', e.target.value)}
-                              className="w-full bg-white border border-blue-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-700 focus:outline-none"
+                              className={`w-full bg-white border border-blue-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-700 focus:outline-none ${
+                                !isUserAdmin ? 'opacity-70 cursor-not-allowed bg-slate-100' : ''
+                              }`}
                             >
                               <option value="Wellington">Wellington</option>
                               <option value="Raissa">Raissa</option>
@@ -1094,7 +1245,10 @@ export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }
                           </span>
                         </td>
                         <td className="px-4 py-4 text-[10px] font-extrabold text-slate-600">
-                          {c.convidado_por}
+                          <span className="flex items-center gap-1" title={!canEdit ? "Somente leitura" : undefined}>
+                            {c.convidado_por}
+                            {!canEdit && <Lock className="w-3 h-3 text-slate-400" />}
+                          </span>
                         </td>
                         <td className="px-4 py-4">
                           <span className="flex items-center gap-0.5">
@@ -1120,8 +1274,13 @@ export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }
                         </td>
                         <td className="px-4 py-4 text-center">
                           <button
-                            onClick={() => onUpdate(c.id, { confirmado: !c.confirmado })}
-                            className={`inline-flex px-2.5 py-1 text-[10px] font-black uppercase rounded-full border cursor-pointer select-none transition-all active:scale-95 ${
+                            onClick={() => canEdit && onUpdate(c.id, { confirmado: !c.confirmado })}
+                            disabled={!canEdit}
+                            className={`inline-flex px-2.5 py-1 text-[10px] font-black uppercase rounded-full border select-none transition-all ${
+                              !canEdit
+                                ? 'opacity-60 cursor-not-allowed'
+                                : 'cursor-pointer active:scale-95'
+                            } ${
                               c.confirmado
                                 ? 'bg-green-50 border-green-200 text-green-700'
                                 : 'bg-yellow-50 border-yellow-200 text-yellow-700'
@@ -1131,26 +1290,33 @@ export default function ConvidadosView({ convidados, onAdd, onUpdate, onDelete }
                           </button>
                         </td>
                         <td className="px-5 py-4 text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            <button
-                              onClick={() => handleStartEdit(c)}
-                              className="p-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-xl transition-all cursor-pointer"
-                              title="Editar Linha"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                if (confirm(`Excluir convidado ${c.nome}?`)) {
-                                  onDelete(c.id);
-                                }
-                              }}
-                              className="p-1.5 bg-red-50 hover:bg-red-100 text-red-500 border border-red-100 rounded-xl transition-all cursor-pointer"
-                              title="Excluir Convidado"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
+                          {canEdit ? (
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => handleStartEdit(c)}
+                                className="p-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-xl transition-all cursor-pointer"
+                                title="Editar Linha"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (confirm(`Excluir convidado ${c.nome}?`)) {
+                                    onDelete(c.id);
+                                  }
+                                }}
+                                className="p-1.5 bg-red-50 hover:bg-red-100 text-red-500 border border-red-100 rounded-xl transition-all cursor-pointer"
+                                title="Excluir Convidado"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-center gap-1 text-slate-400 text-[10px] font-bold" title="Somente leitura (cadastrado por outro usuário)">
+                              <Lock className="w-3.5 h-3.5" />
+                              <span>Somente leitura</span>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     );

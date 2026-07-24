@@ -227,18 +227,13 @@ export default function HomePage() {
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 text-slate-800 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200">
-            <span className="text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
-              <span className={`w-2 h-2 rounded-full animate-ping ${
-                activeTab === 'dashboard' ? 'bg-blue-500' :
-                activeTab === 'convidados' ? 'bg-orange-500' :
-                activeTab === 'financeiro' ? 'bg-slate-800' : 'bg-red-500'
-              }`}></span>
-              {activeTab === 'dashboard' ? 'Painel' :
-               activeTab === 'convidados' ? 'Convidados' :
-               activeTab === 'financeiro' ? 'Financeiro' : 'Ajustes'}
-            </span>
-          </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 text-white rounded-full text-[10px] font-black uppercase tracking-wider active:scale-95 transition-all shadow-sm"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Sair
+          </button>
         </header>
 
         {/* Content Area */}
@@ -255,6 +250,7 @@ export default function HomePage() {
           {activeTab === 'convidados' && (
             <ConvidadosView 
               convidados={convidados}
+              currentUser={currentUser}
               onAdd={handleAddConvidado}
               onUpdate={handleUpdateConvidado}
               onDelete={handleDeleteConvidado}
