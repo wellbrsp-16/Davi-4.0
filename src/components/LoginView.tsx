@@ -48,11 +48,8 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
             4
           </div>
           <h2 className="text-2xl font-black text-slate-800 tracking-tight">
-            Davi 4.0 <span className="text-sonic-blue">Sonic</span>
+            Davi 4.0
           </h2>
-          <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-widest">
-            Acesso ao Painel Oficial
-          </p>
         </div>
 
         {error && (
@@ -126,7 +123,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
 
         {/* Small theme guide footer */}
         <div className="mt-8 pt-6 border-t border-slate-100 text-center text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-          Wellington & Raissa • Festa de 4 Anos
+          Festa de 4 Anos
         </div>
 
       </div>
