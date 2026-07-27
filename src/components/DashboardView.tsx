@@ -57,6 +57,15 @@ export default function DashboardView({ config, convidados, financeiro, planejam
 
   const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
 
+  // Compare party date with today's date
+  const partyDate = config.data_festa ? new Date(config.data_festa) : new Date();
+  const todayMidnight = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate()).getTime();
+  const partyMidnight = new Date(partyDate.getFullYear(), partyDate.getMonth(), partyDate.getDate()).getTime();
+
+  const isPartyDay = todayMidnight === partyMidnight;
+  const isBeforePartyDay = todayMidnight < partyMidnight;
+  const isAfterPartyDay = todayMidnight > partyMidnight;
+
   const getRoteiroItemStyle = (item: RoteiroItem) => {
     if (item.status === 'OK') {
       return {
@@ -69,6 +78,31 @@ export default function DashboardView({ config, convidados, financeiro, planejam
       };
     }
 
+    // If today is BEFORE the party date, item is scheduled for future party date
+    if (isBeforePartyDay) {
+      return {
+        cardStyle: 'bg-slate-50/70 border-slate-200/90 text-slate-800 border-l-4 border-l-slate-300 hover:bg-slate-50',
+        dotStyle: 'bg-slate-300 ring-4 ring-slate-100 text-slate-600',
+        badgeStyle: 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200',
+        badgeText: 'Pendente',
+        statusType: 'pending',
+        highlightText: null
+      };
+    }
+
+    // If today is AFTER the party date, remaining pendente items are marked overdue
+    if (isAfterPartyDay) {
+      return {
+        cardStyle: 'bg-red-500/10 border-red-500/30 text-red-950 border-l-4 border-l-red-500',
+        dotStyle: 'bg-red-500 ring-4 ring-red-100 text-white',
+        badgeStyle: 'bg-red-100 text-red-700 border-red-200 font-bold',
+        badgeText: 'Atrasado',
+        statusType: 'overdue',
+        highlightText: '⚠️ Evento não concluído na data da festa'
+      };
+    }
+
+    // ON THE PARTY DAY: Compare hours & minutes of the party day
     const startMins = getMinutes(item.hora_inicio);
     const diff = startMins - currentMinutes;
 
