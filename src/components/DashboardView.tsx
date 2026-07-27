@@ -114,9 +114,8 @@ export default function DashboardView({ config, convidados, financeiro, planejam
     <div className="space-y-6 animate-dash">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         
-        {/* Left Side: Banner and Countdown */}
-        <div className="space-y-6">
-          {/* Banner de Boas-vindas Temático */}
+        {/* 1. Banner (Order 1 on Mobile & Desktop) */}
+        <div className="order-1 lg:order-1">
           <div className="rounded-3xl shadow-xl relative overflow-hidden border border-slate-200/50 aspect-video md:aspect-[21/9] lg:aspect-video xl:aspect-[21/9]">
             <img 
               src="/images/sonic_friends_banner.png" 
@@ -143,104 +142,10 @@ export default function DashboardView({ config, convidados, financeiro, planejam
               </div>
             </div>
           </div>
-
-          {/* Roteiro da Festa - Timeline Linha do Tempo Sofisticada */}
-          <div className="glass-card rounded-3xl p-6 shadow-xl border border-slate-200/60 bg-white/90 backdrop-blur-md space-y-5">
-            {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-sonic-blue flex items-center justify-center shadow-sm">
-                  <Clock className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-black text-slate-800 tracking-tight">
-                    Roteiro da Festa
-                  </h3>
-                  <p className="text-[10px] text-slate-400 font-semibold">
-                    Cronograma de eventos em tempo real
-                  </p>
-                </div>
-              </div>
-
-              {/* Progress pill */}
-              <div className="flex items-center gap-2">
-                <div className="text-right">
-                  <span className="block text-[11px] font-black text-slate-800">
-                    {sortedRoteiro.filter(r => r.status === 'OK').length}/{sortedRoteiro.length}
-                  </span>
-                  <span className="block text-[8px] uppercase font-bold text-slate-400">
-                    Concluídos
-                  </span>
-                </div>
-                <div className="w-10 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-                  <div
-                    className="h-full bg-emerald-500 transition-all duration-500"
-                    style={{
-                      width: sortedRoteiro.length > 0
-                        ? `${(sortedRoteiro.filter(r => r.status === 'OK').length / sortedRoteiro.length) * 100}%`
-                        : '0%'
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {sortedRoteiro.length === 0 ? (
-              <div className="text-center py-8 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 space-y-1">
-                <p className="text-xs font-bold text-slate-500">Nenhum evento cadastrado</p>
-                <p className="text-[10px] text-slate-400">Cadastre o cronograma na aba Configurações</p>
-              </div>
-            ) : (
-              <div className="relative pl-3 space-y-4">
-                {/* Vertical Connector Line */}
-                <div className="absolute left-[21px] top-3 bottom-3 w-0.5 bg-gradient-to-b from-slate-200 via-slate-300 to-slate-100" />
-
-                {sortedRoteiro.map(item => {
-                  const style = getRoteiroItemStyle(item);
-                  return (
-                    <div key={item.id} className="relative flex items-start gap-4 group">
-                      {/* Timeline Node Dot */}
-                      <div className={`relative z-10 w-4 h-4 mt-3 rounded-full shrink-0 transition-transform ${style.dotStyle}`} />
-
-                      {/* Event Content Card */}
-                      <div className={`flex-1 p-3.5 rounded-2xl border transition-all duration-200 hover:-translate-y-0.5 ${style.cardStyle}`}>
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="space-y-1 min-w-0 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-black text-[11px] px-2 py-0.5 rounded-lg bg-slate-900/10 text-current border border-current/15 tracking-tight font-mono">
-                                ⏰ {item.hora_inicio}{item.hora_fim ? ` - ${item.hora_fim}` : ''}
-                              </span>
-                              <span className="font-extrabold text-sm tracking-tight text-slate-900 leading-snug">
-                                {item.evento}
-                              </span>
-                            </div>
-
-                            {style.highlightText && (
-                              <p className="text-[10px] font-extrabold tracking-wide mt-1 animate-pulse">
-                                {style.highlightText}
-                              </p>
-                            )}
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => onUpdateRoteiro && onUpdateRoteiro(item.id, { status: item.status === 'OK' ? 'Pendente' : 'OK' })}
-                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black transition-all border shrink-0 flex items-center gap-1.5 cursor-pointer active:scale-95 ${style.badgeStyle}`}
-                          >
-                            {style.badgeText}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
         </div>
 
-        {/* Right Side: Quick Stats and Progress */}
-        <div className="space-y-6">
+        {/* 2. Quick Stats and Progress (Order 2 on Mobile & Desktop) */}
+        <div className="order-2 lg:order-2 space-y-6 lg:row-span-2">
           {/* Estatísticas Rápidas - Cards Modernos */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             
@@ -459,6 +364,102 @@ export default function DashboardView({ config, convidados, financeiro, planejam
                 </div>
               );
             })()}
+          </div>
+        </div>
+
+        {/* 3. Roteiro da Festa (Order 3: LAST on Mobile, under Banner on Desktop) */}
+        <div className="order-3 lg:order-3">
+          <div className="glass-card rounded-3xl p-6 shadow-xl border border-slate-200/60 bg-white/90 backdrop-blur-md space-y-5">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-sonic-blue flex items-center justify-center shadow-sm">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-800 tracking-tight">
+                    Roteiro da Festa
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-semibold">
+                    Cronograma de eventos em tempo real
+                  </p>
+                </div>
+              </div>
+
+              {/* Progress pill */}
+              <div className="flex items-center gap-2">
+                <div className="text-right">
+                  <span className="block text-[11px] font-black text-slate-800">
+                    {sortedRoteiro.filter(r => r.status === 'OK').length}/{sortedRoteiro.length}
+                  </span>
+                  <span className="block text-[8px] uppercase font-bold text-slate-400">
+                    Concluídos
+                  </span>
+                </div>
+                <div className="w-10 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                  <div
+                    className="h-full bg-emerald-500 transition-all duration-500"
+                    style={{
+                      width: sortedRoteiro.length > 0
+                        ? `${(sortedRoteiro.filter(r => r.status === 'OK').length / sortedRoteiro.length) * 100}%`
+                        : '0%'
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {sortedRoteiro.length === 0 ? (
+              <div className="text-center py-8 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 space-y-1">
+                <p className="text-xs font-bold text-slate-500">Nenhum evento cadastrado</p>
+                <p className="text-[10px] text-slate-400">Cadastre o cronograma na aba Configurações</p>
+              </div>
+            ) : (
+              <div className="relative pl-3 space-y-4">
+                {/* Vertical Connector Line */}
+                <div className="absolute left-[21px] top-3 bottom-3 w-0.5 bg-gradient-to-b from-slate-200 via-slate-300 to-slate-100" />
+
+                {sortedRoteiro.map(item => {
+                  const style = getRoteiroItemStyle(item);
+                  return (
+                    <div key={item.id} className="relative flex items-start gap-4 group">
+                      {/* Timeline Node Dot */}
+                      <div className={`relative z-10 w-4 h-4 mt-3 rounded-full shrink-0 transition-transform ${style.dotStyle}`} />
+
+                      {/* Event Content Card */}
+                      <div className={`flex-1 p-3.5 rounded-2xl border transition-all duration-200 hover:-translate-y-0.5 ${style.cardStyle}`}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1 min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-black text-[11px] px-2 py-0.5 rounded-lg bg-slate-900/10 text-current border border-current/15 tracking-tight font-mono">
+                                ⏰ {item.hora_inicio}{item.hora_fim ? ` - ${item.hora_fim}` : ''}
+                              </span>
+                              <span className="font-extrabold text-sm tracking-tight text-slate-900 leading-snug">
+                                {item.evento}
+                              </span>
+                            </div>
+
+                            {style.highlightText && (
+                              <p className="text-[10px] font-extrabold tracking-wide mt-1 animate-pulse">
+                                {style.highlightText}
+                              </p>
+                            )}
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => onUpdateRoteiro && onUpdateRoteiro(item.id, { status: item.status === 'OK' ? 'Pendente' : 'OK' })}
+                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black transition-all border shrink-0 flex items-center gap-1.5 cursor-pointer active:scale-95 ${style.badgeStyle}`}
+                          >
+                            {style.badgeText}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
