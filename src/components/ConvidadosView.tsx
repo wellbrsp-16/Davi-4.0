@@ -686,11 +686,11 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
     const messageText = `Olá, ${name}! 🎉\n\nVocê foi convidado(a) para a festa de 4 anos do Davi!\n\nConfirme sua presença pelo link abaixo até 26/08/2026 para que o Sonic possa organizar tudo direitinho. 💙\n\n👉 ${url}`;
 
     try {
-      // Fetch clean official invite image
-      const response = await fetch('/images/Convite-Davi.png');
+      // Fetch clean official invite image (highly compressed JPEG)
+      const response = await fetch('/images/Convite-Davi.jpg');
       const blob = await response.blob();
-      const fileName = `Convite_Davi_${name.replace(/\s+/g, '_')}.png`;
-      const file = new File([blob], fileName, { type: 'image/png' });
+      const fileName = `Convite_Davi_${name.replace(/\s+/g, '_')}.jpg`;
+      const file = new File([blob], fileName, { type: 'image/jpeg' });
 
       // Try Web Share API for Mobile devices (shares image + text together to WhatsApp)
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
