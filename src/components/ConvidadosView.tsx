@@ -574,7 +574,7 @@ function MobileGuestCard({
           <div className="flex items-start justify-between gap-3">
             {/* Left: name, type, invited-by, stars */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1.5">
+              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                 <span className="font-black text-slate-800 text-[15px] truncate">
                   {convidado.nome}
                 </span>
@@ -586,6 +586,11 @@ function MobileGuestCard({
                 >
                   {convidado.tipo}
                 </span>
+                {convidado.convite_enviado && (
+                  <span className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-extrabold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full border border-emerald-200/60" title="Convite já enviado">
+                    <Check className="w-2.5 h-2.5 text-emerald-600" /> Enviado
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-3 text-[11px] text-slate-500 font-semibold">
                 <span className="flex items-center gap-1" title={!canEdit ? "Somente leitura" : undefined}>
@@ -684,6 +689,9 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
     const shortId = id.substring(0, 8);
     const url = `${window.location.origin}/?r=${shortId}`;
     const messageText = `Olá, ${name}! 🎉\n\nVocê foi convidado(a) para a festa de 4 anos do Davi!\n\nConfirme sua presença pelo link abaixo até 26/08/2026 para que o Sonic possa organizar tudo direitinho. 💙\n\n👉 ${url}`;
+
+    // Mark guest invitation as sent
+    onUpdate(id, { convite_enviado: true });
 
     try {
       // Fetch clean official invite image (highly compressed JPEG)
@@ -1374,7 +1382,14 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
                     return (
                       <tr key={c.id} className="hover:bg-slate-50/60 transition-colors whitespace-nowrap">
                         <td className="px-5 py-4 text-[10px] font-extrabold text-slate-800 truncate max-w-[176px]">
-                          <span className="block font-black text-slate-800">{c.nome}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-black text-slate-800">{c.nome}</span>
+                            {c.convite_enviado && (
+                              <span className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-extrabold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.2 rounded-full border border-emerald-200/60" title="Convite enviado">
+                                <Check className="w-2.5 h-2.5 text-emerald-600" /> Enviado
+                              </span>
+                            )}
+                          </div>
                           <span className="block text-[8px] text-slate-400 font-medium mt-0.5">
                             {c.criado_em ? formatDateTime(c.criado_em) : '-'} | {c.atualizado_em && c.atualizado_em !== c.criado_em ? formatDateTime(c.atualizado_em) : '-'}
                           </span>
@@ -1446,8 +1461,12 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
                             <div className="flex items-center justify-center gap-2">
                               <button
                                 onClick={() => handleCopyInviteLink(c.id, c.nome)}
-                                className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-100 rounded-xl transition-all cursor-pointer"
-                                title="Copiar Link de Convite"
+                                className={`p-1.5 rounded-xl transition-all cursor-pointer ${
+                                  c.convite_enviado
+                                    ? 'bg-emerald-100 text-emerald-700 border border-emerald-300'
+                                    : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-100'
+                                }`}
+                                title={c.convite_enviado ? "Convite já enviado (clique para reenviar)" : "Copiar Link de Convite"}
                               >
                                 <Share2 className="w-3.5 h-3.5" />
                               </button>

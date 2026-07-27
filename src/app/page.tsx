@@ -197,7 +197,7 @@ export default function HomePage() {
               <div className="w-4 h-4 bg-yellow-400 rounded-full"></div>
             </div>
             <span className="font-black text-lg tracking-tight">
-              Davi 4.0 <span className="text-sonic-sky font-extrabold text-xs px-2 py-0.5 bg-blue-900 rounded-full">Sonic</span>
+              Davi 4.0
             </span>
           </div>
 

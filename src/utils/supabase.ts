@@ -24,6 +24,7 @@ export type Convidado = {
   confirmado: boolean | null;
   criado_em: string;
   atualizado_em?: string;
+  convite_enviado?: boolean;
 };
 
 export type PlanejamentoItem = {
