@@ -8,6 +8,7 @@ import FinanceiroView from '@/components/FinanceiroView';
 import ConfiguracaoView from '@/components/ConfiguracaoView';
 import LoginView from '@/components/LoginView';
 import ForcePasswordChangeView from '@/components/ForcePasswordChangeView';
+import RSVPView from '@/components/RSVPView';
 import { db, Convidado, FinanceiroItem, PlanejamentoItem, Usuario } from '@/utils/supabase';
 
 type Tab = 'dashboard' | 'convidados' | 'financeiro' | 'configuracao';
@@ -15,6 +16,18 @@ type Tab = 'dashboard' | 'convidados' | 'financeiro' | 'configuracao';
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [currentUser, setCurrentUser] = useState<Usuario | null>(null);
+  const [rsvpId, setRsvpId] = useState<string | null>(null);
+
+  // Parse URL parameter rsvp or r (short link) client-side
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const rsvp = params.get('rsvp') || params.get('r');
+      if (rsvp) {
+        setRsvpId(rsvp);
+      }
+    }
+  }, []);
 
   // App States
   const [config, setConfig] = useState({ nome_aniversariante: '', data_festa: '' });
@@ -144,6 +157,10 @@ export default function HomePage() {
     setCurrentUser(null);
     setActiveTab('dashboard');
   };
+
+  if (rsvpId) {
+    return <RSVPView guestId={rsvpId} />;
+  }
 
   if (loading) {
     return (

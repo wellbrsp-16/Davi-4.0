@@ -21,7 +21,7 @@ export type Convidado = {
   convidado_por: 'Wellington' | 'Raissa';
   participacoes: string[];
   prioridade: 1 | 2 | 3;
-  confirmado: boolean;
+  confirmado: boolean | null;
   criado_em: string;
   atualizado_em?: string;
 };
@@ -84,8 +84,8 @@ class MockSupabaseService {
   private initialConvidados: Convidado[] = [
     { id: '1', nome: 'Tio Tailz', tipo: 'Adulto', convidado_por: 'Wellington', participacoes: ['Festa', 'Almoço'], prioridade: 1, confirmado: true, criado_em: new Date().toISOString() },
     { id: '2', nome: 'Arthur (Amiguinho)', tipo: 'Criança', convidado_por: 'Raissa', participacoes: ['Festa'], prioridade: 1, confirmado: true, criado_em: new Date().toISOString() },
-    { id: '3', nome: 'Sofia (Prima)', tipo: 'Criança', convidado_por: 'Raissa', participacoes: ['Festa'], prioridade: 2, confirmado: false, criado_em: new Date().toISOString() },
-    { id: '4', nome: 'Marcos Silva', tipo: 'Adulto', convidado_por: 'Wellington', participacoes: ['Festa'], prioridade: 3, confirmado: false, criado_em: new Date().toISOString() },
+    { id: '3', nome: 'Sofia (Prima)', tipo: 'Criança', convidado_por: 'Raissa', participacoes: ['Festa'], prioridade: 2, confirmado: null, criado_em: new Date().toISOString() },
+    { id: '4', nome: 'Marcos Silva', tipo: 'Adulto', convidado_por: 'Wellington', participacoes: ['Festa'], prioridade: 3, confirmado: null, criado_em: new Date().toISOString() },
     { id: '5', nome: 'Maria Souza', tipo: 'Adulto', convidado_por: 'Raissa', participacoes: ['Festa'], prioridade: 2, confirmado: true, criado_em: new Date().toISOString() },
     { id: '6', nome: 'Lucas Rodrigues', tipo: 'Criança', convidado_por: 'Wellington', participacoes: ['Festa'], prioridade: 1, confirmado: false, criado_em: new Date().toISOString() }
   ];
@@ -169,9 +169,15 @@ class MockSupabaseService {
     return this.getStorageItem('mn_convidados', this.initialConvidados);
   }
 
+  getConvidadoById(id: string) {
+    const list = this.getConvidados();
+    return list.find(c => c.id === id) || null;
+  }
+
   addConvidado(convidado: any) {
     const list = this.getConvidados();
     const newItem = {
+      confirmado: null,
       ...convidado,
       id: Math.random().toString(36).substring(2, 9),
       criado_em: new Date().toISOString(),
@@ -351,6 +357,36 @@ class DatabaseService {
       }
     }
     return mockDb.getConvidados();
+  }
+
+  async getConvidadoById(id: string) {
+    if (isSupabaseConfigured) {
+      try {
+        // Try exact match first
+        let { data, error } = await supabase
+          .from('convidados')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+
+        // If not found and ID looks like a prefix, try ilike prefix match
+        if (!data && id.length < 36) {
+          const { data: prefixData, error: prefixError } = await supabase
+            .from('convidados')
+            .select('*')
+            .filter('id', 'ilike', `${id}%`);
+
+          if (!prefixError && prefixData && prefixData.length > 0) {
+            data = prefixData[0];
+          }
+        }
+
+        if (data) return data;
+      } catch (err) {
+        console.error('Supabase getConvidadoById error:', err);
+      }
+    }
+    return mockDb.getConvidadoById(id);
   }
 
   async addConvidado(convidado: any) {

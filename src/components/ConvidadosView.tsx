@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Search, Plus, Trash2, Edit2, Check, X, Star, UserCheck, User, ChevronLeft, ArrowUpDown, Lock } from 'lucide-react';
+import { Search, Plus, Trash2, Edit2, Check, X, Star, UserCheck, User, ChevronLeft, ArrowUpDown, Lock, Share2, ThumbsUp, ThumbsDown, Hourglass } from 'lucide-react';
 import { Convidado, Usuario } from '@/utils/supabase';
 
 // ─────────────────────────────────────────────────────────
@@ -114,11 +114,10 @@ function MobileParticipacoes({
             key={opt}
             type="button"
             onClick={() => toggle(opt)}
-            className={`text-xs font-bold py-2.5 px-2 rounded-xl border-2 transition-all active:scale-95 ${
-              checked
+            className={`text-xs font-bold py-2.5 px-2 rounded-xl border-2 transition-all active:scale-95 ${checked
                 ? 'bg-sonic-blue text-white border-sonic-blue shadow-sm'
                 : 'bg-slate-50 text-slate-600 border-slate-200'
-            }`}
+              }`}
           >
             {opt}
           </button>
@@ -137,7 +136,7 @@ interface GuestFormData {
   convidado_por: 'Wellington' | 'Raissa';
   prioridade: 1 | 2 | 3;
   participacoes: string[];
-  confirmado: boolean;
+  confirmado: boolean | null;
 }
 
 const DEFAULT_FORM: GuestFormData = {
@@ -146,7 +145,7 @@ const DEFAULT_FORM: GuestFormData = {
   convidado_por: 'Wellington',
   prioridade: 1,
   participacoes: [],
-  confirmado: false,
+  confirmado: null,
 };
 
 interface ConvidadosViewProps {
@@ -164,7 +163,7 @@ interface NewGuestRow {
   convidado_por: 'Wellington' | 'Raissa';
   prioridade: 1 | 2 | 3;
   participacoes: string[];
-  confirmado: boolean;
+  confirmado: boolean | null;
 }
 
 // ─────────────────────────────────────────────────────────
@@ -215,17 +214,15 @@ function MobileBottomSheet({
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-[55] md:hidden transition-opacity duration-300 ${
-          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
+        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-[55] md:hidden transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
         onClick={onClose}
       />
 
       {/* Sheet panel */}
       <div
-        className={`fixed bottom-0 left-0 right-0 z-[60] md:hidden bg-white rounded-t-3xl shadow-2xl transition-transform duration-300 ease-out ${
-          isOpen ? 'translate-y-0' : 'translate-y-full'
-        }`}
+        className={`fixed bottom-0 left-0 right-0 z-[60] md:hidden bg-white rounded-t-3xl shadow-2xl transition-transform duration-300 ease-out ${isOpen ? 'translate-y-0' : 'translate-y-full'
+          }`}
       >
         {/* Drag handle */}
         <div className="flex justify-center pt-4 pb-1">
@@ -288,9 +285,8 @@ function MobileBottomSheet({
                 value={form.convidado_por}
                 disabled={!isUserAdmin}
                 onChange={(e) => update('convidado_por', e.target.value as 'Wellington' | 'Raissa')}
-                className={`w-full px-4 py-4 bg-slate-50 border-2 border-slate-200 rounded-2xl text-sm font-bold text-slate-700 focus:outline-none appearance-none ${
-                  !isUserAdmin ? 'opacity-70 cursor-not-allowed bg-slate-100' : 'focus:border-sonic-blue'
-                }`}
+                className={`w-full px-4 py-4 bg-slate-50 border-2 border-slate-200 rounded-2xl text-sm font-bold text-slate-700 focus:outline-none appearance-none ${!isUserAdmin ? 'opacity-70 cursor-not-allowed bg-slate-100' : 'focus:border-sonic-blue'
+                  }`}
               >
                 <option value="Wellington">Wellington</option>
                 <option value="Raissa">Raissa</option>
@@ -312,19 +308,17 @@ function MobileBottomSheet({
                     key={p}
                     type="button"
                     onClick={() => update('prioridade', p)}
-                    className={`py-3 rounded-2xl border-2 text-xs font-bold flex flex-col items-center gap-1.5 transition-all active:scale-95 ${
-                      isSelected
+                    className={`py-3 rounded-2xl border-2 text-xs font-bold flex flex-col items-center gap-1.5 transition-all active:scale-95 ${isSelected
                         ? 'bg-yellow-50 border-yellow-400 text-yellow-700'
                         : 'bg-slate-50 border-slate-200 text-slate-400'
-                    }`}
+                      }`}
                   >
                     <span className="flex gap-0.5">
                       {Array.from({ length: s }).map((_, i) => (
                         <Star
                           key={i}
-                          className={`w-3 h-3 ${
-                            isSelected ? 'fill-yellow-400 text-yellow-400' : 'text-slate-300'
-                          }`}
+                          className={`w-3 h-3 ${isSelected ? 'fill-yellow-400 text-yellow-400' : 'text-slate-300'
+                            }`}
                         />
                       ))}
                     </span>
@@ -351,28 +345,36 @@ function MobileBottomSheet({
             <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">
               Status
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
-                onClick={() => update('confirmado', false)}
-                className={`py-3.5 rounded-2xl border-2 text-sm font-black transition-all active:scale-95 ${
-                  !form.confirmado
+                onClick={() => update('confirmado', null)}
+                className={`py-3 rounded-2xl border-2 text-[11px] font-black transition-all active:scale-95 cursor-pointer ${form.confirmado === null
                     ? 'bg-yellow-50 border-yellow-300 text-yellow-700'
-                    : 'bg-slate-50 border-slate-200 text-slate-400'
-                }`}
+                    : 'bg-slate-50 border-slate-200/60 text-slate-400'
+                  }`}
               >
                 Pendente
               </button>
               <button
                 type="button"
                 onClick={() => update('confirmado', true)}
-                className={`py-3.5 rounded-2xl border-2 text-sm font-black transition-all active:scale-95 ${
-                  form.confirmado
+                className={`py-3 rounded-2xl border-2 text-[11px] font-black transition-all active:scale-95 cursor-pointer ${form.confirmado === true
                     ? 'bg-green-50 border-green-300 text-green-700'
-                    : 'bg-slate-50 border-slate-200 text-slate-400'
-                }`}
+                    : 'bg-slate-50 border-slate-200/60 text-slate-400'
+                  }`}
               >
                 ✓ Confirmado
+              </button>
+              <button
+                type="button"
+                onClick={() => update('confirmado', false)}
+                className={`py-3 rounded-2xl border-2 text-[11px] font-black transition-all active:scale-95 cursor-pointer ${form.confirmado === false
+                    ? 'bg-rose-50 border-rose-300 text-rose-700'
+                    : 'bg-slate-50 border-slate-200/60 text-slate-400'
+                  }`}
+              >
+                ✗ Não Vai
               </button>
             </div>
           </div>
@@ -423,6 +425,7 @@ function MobileGuestCard({
   onDelete,
   onToggleStatus,
   onSetConfirmed,
+  onCopyInvite,
 }: {
   convidado: Convidado;
   canEdit: boolean;
@@ -430,6 +433,7 @@ function MobileGuestCard({
   onDelete: () => void;
   onToggleStatus: () => void;
   onSetConfirmed: () => void;
+  onCopyInvite: () => void;
 }) {
   const [swipeX, setSwipeX] = useState(0);
   const [isRevealed, setIsRevealed] = useState(false);
@@ -438,7 +442,7 @@ function MobileGuestCard({
   const startYRef = useRef(0);
   const isDraggingRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const THRESHOLD = 80;
+  const THRESHOLD = 120;
 
   const getStarCount = (p: number) => (p === 1 ? 5 : p === 2 ? 3 : 1);
 
@@ -529,8 +533,17 @@ function MobileGuestCard({
         <div className="absolute inset-y-0 right-0 flex" style={{ width: THRESHOLD }}>
           <button
             onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); snapTo(0, false); onCopyInvite(); }}
+            className="flex-1 flex items-center justify-center bg-emerald-500 text-white"
+            title="Copiar Link de Convite"
+          >
+            <Share2 className="w-5 h-5" />
+          </button>
+          <button
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); snapTo(0, false); onEdit(); }}
             className="flex-1 flex items-center justify-center bg-sonic-blue text-white"
+            title="Editar Convidado"
           >
             <Edit2 className="w-5 h-5" />
           </button>
@@ -538,6 +551,7 @@ function MobileGuestCard({
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); snapTo(0, false); onDelete(); }}
             className="flex-1 flex items-center justify-center bg-red-500 text-white rounded-r-2xl"
+            title="Excluir Convidado"
           >
             <Trash2 className="w-5 h-5" />
           </button>
@@ -565,11 +579,10 @@ function MobileGuestCard({
                   {convidado.nome}
                 </span>
                 <span
-                  className={`shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full ${
-                    convidado.tipo === 'Criança'
+                  className={`shrink-0 text-[9px] font-extrabold px-2 py-0.5 rounded-full ${convidado.tipo === 'Criança'
                       ? 'bg-orange-100 text-orange-700'
                       : 'bg-slate-100 text-slate-600'
-                  }`}
+                    }`}
                 >
                   {convidado.tipo}
                 </span>
@@ -586,8 +599,7 @@ function MobileGuestCard({
                 </span>
               </div>
               <div className="text-[9px] text-slate-400 font-medium mt-1">
-                Cad: {convidado.criado_em ? formatDateTime(convidado.criado_em) : '-'}
-                {convidado.atualizado_em && convidado.atualizado_em !== convidado.criado_em && ` · Alt: ${formatDateTime(convidado.atualizado_em)}`}
+                {convidado.criado_em ? formatDateTime(convidado.criado_em) : '-'} | {convidado.atualizado_em && convidado.atualizado_em !== convidado.criado_em ? formatDateTime(convidado.atualizado_em) : '-'}
               </div>
             </div>
 
@@ -599,15 +611,22 @@ function MobileGuestCard({
                 if (canEdit) onToggleStatus();
               }}
               disabled={!canEdit}
-              className={`shrink-0 px-3 py-1.5 text-[10px] font-black uppercase rounded-full border transition-all ${
-                !canEdit ? 'opacity-60 cursor-not-allowed' : 'active:scale-95 cursor-pointer'
-              } ${
-                convidado.confirmado
-                  ? 'bg-green-50 border-green-200 text-green-700'
-                  : 'bg-yellow-50 border-yellow-200 text-yellow-700'
-              }`}
+              className={`shrink-0 p-2.5 rounded-xl border transition-all ${!canEdit ? 'opacity-60 cursor-not-allowed' : 'active:scale-95 cursor-pointer'
+                } ${convidado.confirmado === true
+                  ? 'bg-green-50 border-green-200 text-green-600'
+                  : convidado.confirmado === false
+                    ? 'bg-rose-50 border-rose-200 text-rose-600'
+                    : 'bg-yellow-50 border-yellow-200 text-yellow-600'
+                }`}
+              title={convidado.confirmado === true ? 'Confirmado' : convidado.confirmado === false ? 'Não vai' : 'Pendente'}
             >
-              {convidado.confirmado ? 'Confirmado' : 'Pendente'}
+              {convidado.confirmado === true ? (
+                <ThumbsUp className="w-4 h-4" />
+              ) : convidado.confirmado === false ? (
+                <ThumbsDown className="w-4 h-4" />
+              ) : (
+                <Hourglass className="w-4 h-4" />
+              )}
             </button>
           </div>
 
@@ -659,9 +678,75 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
     return guestConvidadoPor.toLowerCase() === userDefaultConvidadoPor.toLowerCase();
   };
 
+  const handleCopyInviteLink = async (id: string, name: string) => {
+    if (typeof window === 'undefined') return;
+
+    const shortId = id.substring(0, 8);
+    const url = `${window.location.origin}/?r=${shortId}`;
+    const messageText = `Olá, ${name}! 🎉\n\nVocê foi convidado(a) para a festa de 4 anos do Davi!\n\nConfirme sua presença pelo link abaixo até 26/08/2026 para que o Sonic possa organizar tudo direitinho. 💙\n\n👉 ${url}`;
+
+    try {
+      // Fetch clean official invite image
+      const response = await fetch('/images/Convite-Davi.png');
+      const blob = await response.blob();
+      const fileName = `Convite_Davi_${name.replace(/\s+/g, '_')}.png`;
+      const file = new File([blob], fileName, { type: 'image/png' });
+
+      // Try Web Share API for Mobile devices (shares image + text together to WhatsApp)
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: `Convite Davi - ${name}`,
+            text: messageText,
+          });
+          return;
+        } catch (shareErr) {
+          // If share cancelled by user, continue to fallback
+        }
+      }
+
+      // Fallback for Desktop / non-supported browsers:
+      // 1. Copy message text to clipboard
+      await navigator.clipboard.writeText(messageText);
+
+      // 2. Trigger clean image download
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+
+      alert(`Convite em imagem baixado e mensagem com o link para "${name}" copiada para a área de transferência! Cole no WhatsApp.`);
+    } catch (err) {
+      console.error('Erro ao compartilhar convite:', err);
+      try {
+        await navigator.clipboard.writeText(url);
+        alert(`Link de convite para "${name}" copiado!`);
+      } catch (clipErr) {
+        alert('Erro ao copiar link.');
+      }
+    }
+  };
+
+  const cycleStatus = (id: string, currentStatus: boolean | null) => {
+    let nextStatus: boolean | null = null;
+    if (currentStatus === null) {
+      nextStatus = true; // Pendente -> Confirmado
+    } else if (currentStatus === true) {
+      nextStatus = false; // Confirmado -> Não vai
+    } else {
+      nextStatus = null; // Não vai -> Pendente
+    }
+    onUpdate(id, { confirmado: nextStatus });
+  };
+
   // ── Shared filter state ──
   const [search, setSearch] = useState('');
-  const [filterConfirmado, setFilterConfirmado] = useState<'todos' | 'confirmados' | 'pendentes'>('todos');
+  const [filterConfirmado, setFilterConfirmado] = useState<'todos' | 'confirmados' | 'pendentes' | 'recusados'>('todos');
   const [filterConvidadoPor, setFilterConvidadoPor] = useState<'todos' | 'Wellington' | 'Raissa'>('todos');
   const [sortField, setSortField] = useState<SortField>('nome');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
@@ -698,7 +783,9 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
     const matchesSearch = c.nome.toLowerCase().includes(search.toLowerCase());
     const matchesConfirmado =
       filterConfirmado === 'todos' ? true :
-      filterConfirmado === 'confirmados' ? c.confirmado : !c.confirmado;
+        filterConfirmado === 'confirmados' ? c.confirmado === true :
+          filterConfirmado === 'pendentes' ? c.confirmado === null :
+            c.confirmado === false;
     const matchesConvidadoPor =
       filterConvidadoPor === 'todos' ? true : c.convidado_por === filterConvidadoPor;
     return matchesSearch && matchesConfirmado && matchesConvidadoPor;
@@ -715,8 +802,10 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
         return dir * a.convidado_por.localeCompare(b.convidado_por, 'pt-BR');
       case 'prioridade':
         return dir * (a.prioridade - b.prioridade);
-      case 'status':
-        return dir * (Number(a.confirmado) - Number(b.confirmado));
+      case 'status': {
+        const getWeight = (st: boolean | null) => (st === true ? 2 : st === null ? 1 : 0);
+        return dir * (getWeight(a.confirmado) - getWeight(b.confirmado));
+      }
       default:
         return 0;
     }
@@ -731,7 +820,7 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
       convidado_por: userDefaultConvidadoPor,
       prioridade: 1,
       participacoes: [],
-      confirmado: false,
+      confirmado: null,
     };
     setNewRows((prev) => [newRow, ...prev]);
   };
@@ -844,8 +933,8 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
         {/* Header */}
         <div>
           <h2 className="text-xl font-black text-slate-800">Convidados</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            {convidados.filter((c) => c.confirmado).length} confirmados · {convidados.length} total
+          <p className="text-[11px] text-slate-500 mt-0.5">
+            {convidados.filter((c) => c.confirmado === true).length} conf. · {convidados.filter((c) => c.confirmado === false).length} não vão · {convidados.length} tot.
           </p>
         </div>
 
@@ -868,12 +957,13 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
               <UserCheck className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3.5 pointer-events-none" />
               <select
                 value={filterConfirmado}
-                onChange={(e) => setFilterConfirmado(e.target.value as 'todos' | 'confirmados' | 'pendentes')}
+                onChange={(e) => setFilterConfirmado(e.target.value as 'todos' | 'confirmados' | 'pendentes' | 'recusados')}
                 className="w-full pl-8 pr-6 py-3 bg-white border border-slate-200 rounded-2xl text-base md:text-xs font-bold text-slate-700 focus:outline-none shadow-sm appearance-none cursor-pointer"
               >
                 <option value="todos">Status</option>
                 <option value="confirmados">Confirmado</option>
                 <option value="pendentes">Pendente</option>
+                <option value="recusados">Não Vai</option>
               </select>
               <span className="absolute right-3 top-3.5 text-[9px] text-slate-400 pointer-events-none">▼</span>
             </div>
@@ -934,6 +1024,7 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
                   }}
                   onToggleStatus={() => onUpdate(c.id, { confirmado: !c.confirmado })}
                   onSetConfirmed={() => onUpdate(c.id, { confirmado: true })}
+                  onCopyInvite={() => handleCopyInviteLink(c.id, c.nome)}
                 />
               );
             })
@@ -974,7 +1065,7 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
               <h2 className="text-xl font-bold text-slate-800">Lista de Convidados</h2>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              {convidados.filter((c) => c.confirmado).length} confirmados de {convidados.length} total
+              {convidados.filter((c) => c.confirmado === true).length} confirmados · {convidados.filter((c) => c.confirmado === false).length} não vão de {convidados.length} total
             </p>
           </div>
         </div>
@@ -999,12 +1090,13 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
               <UserCheck className="w-4 h-4 text-slate-400 absolute left-4 top-3.5 pointer-events-none" />
               <select
                 value={filterConfirmado}
-                onChange={(e) => setFilterConfirmado(e.target.value as 'todos' | 'confirmados' | 'pendentes')}
+                onChange={(e) => setFilterConfirmado(e.target.value as 'todos' | 'confirmados' | 'pendentes' | 'recusados')}
                 className="w-full pl-11 pr-8 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none shadow-sm focus:border-sonic-blue cursor-pointer appearance-none"
               >
                 <option value="todos">Todos Status</option>
                 <option value="confirmados">Confirmado</option>
                 <option value="pendentes">Pendente</option>
+                <option value="recusados">Não Vai</option>
               </select>
               <span className="absolute right-4 top-4 text-[9px] text-slate-400 pointer-events-none">▼</span>
             </div>
@@ -1112,9 +1204,8 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
                         value={row.convidado_por}
                         disabled={!isUserAdmin}
                         onChange={(e) => handleUpdateNewRowField(row.tempId, 'convidado_por', e.target.value)}
-                        className={`w-full bg-white border border-yellow-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-700 focus:outline-none ${
-                          !isUserAdmin ? 'opacity-70 cursor-not-allowed bg-slate-100' : ''
-                        }`}
+                        className={`w-full bg-white border border-yellow-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-700 focus:outline-none ${!isUserAdmin ? 'opacity-70 cursor-not-allowed bg-slate-100' : ''
+                          }`}
                       >
                         <option value="Wellington">Wellington</option>
                         <option value="Raissa">Raissa</option>
@@ -1138,12 +1229,22 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
                       />
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <input
-                        type="checkbox"
-                        checked={row.confirmado}
-                        onChange={(e) => handleUpdateNewRowField(row.tempId, 'confirmado', e.target.checked)}
-                        className="w-4 h-4 rounded text-sonic-blue focus:ring-sonic-blue border-yellow-300 cursor-pointer"
-                      />
+                      <select
+                        value={row.confirmado === true ? 'true' : row.confirmado === false ? 'false' : 'null'}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          handleUpdateNewRowField(
+                            row.tempId,
+                            'confirmado',
+                            val === 'true' ? true : val === 'false' ? false : null
+                          );
+                        }}
+                        className="w-full bg-white border border-yellow-300 rounded-xl px-2 py-1 text-xs font-bold text-slate-700 focus:outline-none"
+                      >
+                        <option value="null">Pendente</option>
+                        <option value="true">Confirmado</option>
+                        <option value="false">Não vai</option>
+                      </select>
                     </td>
                     <td className="px-5 py-3 text-center">
                       <div className="flex items-center justify-center gap-2">
@@ -1206,9 +1307,8 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
                               value={editingRow.convidado_por}
                               disabled={!isUserAdmin}
                               onChange={(e) => handleUpdateEditField(c.id, 'convidado_por', e.target.value)}
-                              className={`w-full bg-white border border-blue-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-700 focus:outline-none ${
-                                !isUserAdmin ? 'opacity-70 cursor-not-allowed bg-slate-100' : ''
-                              }`}
+                              className={`w-full bg-white border border-blue-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-700 focus:outline-none ${!isUserAdmin ? 'opacity-70 cursor-not-allowed bg-slate-100' : ''
+                                }`}
                             >
                               <option value="Wellington">Wellington</option>
                               <option value="Raissa">Raissa</option>
@@ -1232,12 +1332,22 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
                             />
                           </td>
                           <td className="px-4 py-3 text-center">
-                            <input
-                              type="checkbox"
-                              checked={editingRow.confirmado}
-                              onChange={(e) => handleUpdateEditField(c.id, 'confirmado', e.target.checked)}
-                              className="w-4 h-4 rounded text-sonic-blue focus:ring-sonic-blue border-blue-300 cursor-pointer"
-                            />
+                            <select
+                              value={editingRow.confirmado === true ? 'true' : editingRow.confirmado === false ? 'false' : 'null'}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                handleUpdateEditField(
+                                  c.id,
+                                  'confirmado',
+                                  val === 'true' ? true : val === 'false' ? false : null
+                                );
+                              }}
+                              className="w-full bg-white border border-blue-300 rounded-xl px-2 py-1 text-xs font-bold text-slate-700 focus:outline-none"
+                            >
+                              <option value="null">Pendente</option>
+                              <option value="true">Confirmado</option>
+                              <option value="false">Não vai</option>
+                            </select>
                           </td>
                           <td className="px-5 py-3 text-center">
                             <div className="flex items-center justify-center gap-2">
@@ -1266,17 +1376,15 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
                         <td className="px-5 py-4 text-[10px] font-extrabold text-slate-800 truncate max-w-[176px]">
                           <span className="block font-black text-slate-800">{c.nome}</span>
                           <span className="block text-[8px] text-slate-400 font-medium mt-0.5">
-                            Cad: {c.criado_em ? formatDateTime(c.criado_em) : '-'}
-                            {c.atualizado_em && c.atualizado_em !== c.criado_em && ` · Alt: ${formatDateTime(c.atualizado_em)}`}
+                            {c.criado_em ? formatDateTime(c.criado_em) : '-'} | {c.atualizado_em && c.atualizado_em !== c.criado_em ? formatDateTime(c.atualizado_em) : '-'}
                           </span>
                         </td>
                         <td className="px-4 py-4">
                           <span
-                            className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
-                              c.tipo === 'Criança'
+                            className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${c.tipo === 'Criança'
                                 ? 'bg-orange-100 text-orange-700'
                                 : 'bg-slate-150 text-slate-600'
-                            }`}
+                              }`}
                           >
                             {c.tipo}
                           </span>
@@ -1311,24 +1419,38 @@ export default function ConvidadosView({ convidados, currentUser, onAdd, onUpdat
                         </td>
                         <td className="px-4 py-4 text-center">
                           <button
-                            onClick={() => canEdit && onUpdate(c.id, { confirmado: !c.confirmado })}
+                            onClick={() => canEdit && cycleStatus(c.id, c.confirmado)}
                             disabled={!canEdit}
-                            className={`inline-flex px-2.5 py-1 text-[10px] font-black uppercase rounded-full border select-none transition-all ${
-                              !canEdit
+                            className={`inline-flex p-1.5 rounded-xl border select-none transition-all ${!canEdit
                                 ? 'opacity-60 cursor-not-allowed'
                                 : 'cursor-pointer active:scale-95'
-                            } ${
-                              c.confirmado
-                                ? 'bg-green-50 border-green-200 text-green-700'
-                                : 'bg-yellow-50 border-yellow-200 text-yellow-700'
-                            }`}
+                              } ${c.confirmado === true
+                                ? 'bg-green-50 border-green-200 text-green-600'
+                                : c.confirmado === false
+                                  ? 'bg-rose-50 border-rose-200 text-rose-600'
+                                  : 'bg-yellow-50 border-yellow-200 text-yellow-600'
+                              }`}
+                            title={c.confirmado === true ? 'Confirmado' : c.confirmado === false ? 'Não vai' : 'Pendente'}
                           >
-                            {c.confirmado ? 'Confirmado' : 'Pendente'}
+                            {c.confirmado === true ? (
+                              <ThumbsUp className="w-3.5 h-3.5" />
+                            ) : c.confirmado === false ? (
+                              <ThumbsDown className="w-3.5 h-3.5" />
+                            ) : (
+                              <Hourglass className="w-3.5 h-3.5" />
+                            )}
                           </button>
                         </td>
                         <td className="px-5 py-4 text-center">
                           {canEdit ? (
                             <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => handleCopyInviteLink(c.id, c.nome)}
+                                className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-100 rounded-xl transition-all cursor-pointer"
+                                title="Copiar Link de Convite"
+                              >
+                                <Share2 className="w-3.5 h-3.5" />
+                              </button>
                               <button
                                 onClick={() => handleStartEdit(c)}
                                 className="p-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-xl transition-all cursor-pointer"

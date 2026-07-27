@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Calendar, Users, DollarSign, Clock, User, Baby, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Calendar, Users, DollarSign, Clock, User, Baby, Sparkles, CheckCircle2, AlertCircle, XCircle } from 'lucide-react';
 import { Convidado, FinanceiroItem, PlanejamentoItem } from '@/utils/supabase';
 
 interface DashboardProps {
@@ -38,8 +38,9 @@ export default function DashboardView({ config, convidados, financeiro, planejam
 
   // Calculations for guests
   const totalConvidados = convidados.length;
-  const confirmados = convidados.filter(c => c.confirmado).length;
-  const pendentesConvidados = totalConvidados - confirmados;
+  const confirmados = convidados.filter(c => c.confirmado === true).length;
+  const naoVai = convidados.filter(c => c.confirmado === false).length;
+  const pendentesConvidados = convidados.filter(c => c.confirmado === null).length;
   const criancas = convidados.filter(c => c.tipo === 'Criança').length;
   const adultos = totalConvidados - criancas;
 
@@ -167,26 +168,31 @@ export default function DashboardView({ config, convidados, financeiro, planejam
                 </div>
               </div>
 
-              {/* Grid 4 Mini Métricas sem texto em Adultos/Crianças */}
-              <div className="grid grid-cols-4 gap-1.5 pt-1 text-xs whitespace-nowrap">
-                <div className="bg-slate-50 border border-slate-100 px-2 py-2 rounded-xl flex items-center justify-center gap-1" title="Adultos">
+              {/* Grid 5 Mini Métricas sem texto em Adultos/Crianças */}
+              <div className="grid grid-cols-5 gap-1 pt-1 text-xs whitespace-nowrap">
+                <div className="bg-slate-50 border border-slate-100 px-1 py-2 rounded-xl flex items-center justify-center gap-1" title="Adultos">
                   <User className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                  <span className="font-black text-slate-800 text-xs">{adultos}</span>
+                  <span className="font-black text-slate-800 text-[11px]">{adultos}</span>
                 </div>
 
-                <div className="bg-slate-50 border border-slate-100 px-2 py-2 rounded-xl flex items-center justify-center gap-1" title="Crianças">
+                <div className="bg-slate-50 border border-slate-100 px-1 py-2 rounded-xl flex items-center justify-center gap-1" title="Crianças">
                   <Baby className="w-3.5 h-3.5 text-purple-500 shrink-0" />
-                  <span className="font-black text-slate-800 text-xs">{criancas}</span>
+                  <span className="font-black text-slate-800 text-[11px]">{criancas}</span>
                 </div>
 
-                <div className="bg-emerald-50/90 border border-emerald-200/80 px-2 py-2 rounded-xl flex items-center justify-center gap-1 text-emerald-800" title="Confirmados">
+                <div className="bg-emerald-50/90 border border-emerald-200/80 px-1 py-2 rounded-xl flex items-center justify-center gap-1 text-emerald-800" title="Confirmados">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span className="font-black text-emerald-900 text-xs">{confirmados}</span>
+                  <span className="font-black text-emerald-900 text-[11px]">{confirmados}</span>
                 </div>
 
-                <div className="bg-amber-50/90 border border-amber-200/80 px-2 py-2 rounded-xl flex items-center justify-center gap-1 text-amber-800" title="Pendentes">
+                <div className="bg-amber-50/90 border border-amber-200/80 px-1 py-2 rounded-xl flex items-center justify-center gap-1 text-amber-800" title="Pendentes">
                   <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                  <span className="font-black text-amber-900 text-xs">{pendentesConvidados}</span>
+                  <span className="font-black text-amber-900 text-[11px]">{pendentesConvidados}</span>
+                </div>
+
+                <div className="bg-rose-50/90 border border-rose-200/80 px-1 py-2 rounded-xl flex items-center justify-center gap-1 text-rose-800" title="Não vão">
+                  <XCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                  <span className="font-black text-rose-900 text-[11px]">{naoVai}</span>
                 </div>
               </div>
             </div>
