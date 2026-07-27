@@ -27,7 +27,8 @@ create table if not exists convidados (
     convidado_por text not null check (convidado_por in ('Wellington', 'Raissa')),
     participacoes text[] not null default '{}'::text[],
     prioridade integer not null check (prioridade between 1 and 3),
-    confirmado boolean not null default false,
+    confirmado boolean,
+    convite_enviado boolean default false,
     criado_em timestamp with time zone not null default now()
 );
 

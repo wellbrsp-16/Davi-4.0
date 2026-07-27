@@ -2,39 +2,24 @@
 
 import { useState, useEffect } from 'react';
 import { Calendar, Users, DollarSign, Clock, User, Baby, Sparkles, CheckCircle2, AlertCircle, XCircle } from 'lucide-react';
-import { Convidado, FinanceiroItem, PlanejamentoItem } from '@/utils/supabase';
+import { Convidado, FinanceiroItem, PlanejamentoItem, RoteiroItem } from '@/utils/supabase';
 
 interface DashboardProps {
   config: { nome_aniversariante: string; data_festa: string };
   convidados: Convidado[];
   financeiro: FinanceiroItem[];
   planejamento: PlanejamentoItem[];
+  roteiro?: RoteiroItem[];
+  onUpdateRoteiro?: (id: string, updates: Partial<RoteiroItem>) => void;
 }
 
-export default function DashboardView({ config, convidados, financeiro, planejamento }: DashboardProps) {
-  const [timeLeft, setTimeLeft] = useState({ dias: 0, horas: 0, minutos: 0, segundos: 0 });
+export default function DashboardView({ config, convidados, financeiro, planejamento, roteiro = [], onUpdateRoteiro }: DashboardProps) {
+  const [currentTime, setCurrentTime] = useState(new Date());
 
-  // Calculate countdown
   useEffect(() => {
-    const calculateTime = () => {
-      const difference = +new Date(config.data_festa) - +new Date();
-      if (difference <= 0) {
-        setTimeLeft({ dias: 0, horas: 0, minutos: 0, segundos: 0 });
-        return;
-      }
-
-      setTimeLeft({
-        dias: Math.floor(difference / (1000 * 60 * 60 * 24)),
-        horas: Math.floor((difference / (1000 * 60 * 60)) % 24),
-        minutos: Math.floor((difference / 1000 / 60) % 60),
-        segundos: Math.floor((difference / 1000) % 60)
-      });
-    };
-
-    calculateTime();
-    const interval = setInterval(calculateTime, 1000);
-    return () => clearInterval(interval);
-  }, [config.data_festa]);
+    const timer = setInterval(() => setCurrentTime(new Date()), 5000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Calculations for guests
   const totalConvidados = convidados.length;
@@ -60,6 +45,62 @@ export default function DashboardView({ config, convidados, financeiro, planejam
   // % do gasto real já quitado
   const pctPago = totalGastoReal > 0 ? Math.min((totalPago / totalGastoReal) * 100, 100) : 0;
   const pctPagoExato = totalGastoReal > 0 ? Math.round((totalPago / totalGastoReal) * 100) : 0;
+
+  // Roteiro time calculation helpers
+  const sortedRoteiro = [...roteiro].sort((a, b) => a.hora_inicio.localeCompare(b.hora_inicio));
+
+  const getMinutes = (timeStr: string) => {
+    if (!timeStr) return 0;
+    const [h, m] = timeStr.split(':').map(Number);
+    return (h || 0) * 60 + (m || 0);
+  };
+
+  const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+
+  const getRoteiroItemStyle = (item: RoteiroItem) => {
+    if (item.status === 'OK') {
+      return {
+        cardStyle: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-950 border-l-4 border-l-emerald-500',
+        dotStyle: 'bg-emerald-500 ring-4 ring-emerald-100 text-white',
+        badgeStyle: 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-700 shadow-sm shadow-emerald-500/20',
+        badgeText: '✓ Concluído',
+        statusType: 'ok',
+        highlightText: null
+      };
+    }
+
+    const startMins = getMinutes(item.hora_inicio);
+    const diff = startMins - currentMinutes;
+
+    if (currentMinutes >= startMins) {
+      return {
+        cardStyle: 'bg-gradient-to-r from-red-500/15 via-rose-500/10 to-red-500/5 border-red-500/40 border-l-4 border-l-red-600 text-red-950 shadow-lg shadow-red-500/10 animate-pulse',
+        dotStyle: 'bg-red-600 ring-4 ring-red-200 text-white animate-ping',
+        badgeStyle: 'bg-red-600 hover:bg-red-700 text-white border-red-700 font-black shadow-md shadow-red-600/30',
+        badgeText: '🚨 EXECUTAR AGORA',
+        statusType: 'red',
+        highlightText: '🔔 Hora de realizar este item do roteiro!'
+      };
+    } else if (diff > 0 && diff <= 15) {
+      return {
+        cardStyle: 'bg-gradient-to-r from-amber-500/15 via-yellow-500/10 to-amber-500/5 border-amber-500/40 border-l-4 border-l-amber-500 text-amber-950 shadow-md',
+        dotStyle: 'bg-amber-500 ring-4 ring-amber-100 text-white',
+        badgeStyle: 'bg-slate-900 hover:bg-slate-800 text-amber-300 border-slate-900 font-black shadow-md',
+        badgeText: `⏳ EM BREVE (${diff} min)`,
+        statusType: 'yellow',
+        highlightText: `⚠️ Faltam apenas ${diff} minuto(s) para o início`
+      };
+    } else {
+      return {
+        cardStyle: 'bg-slate-50/70 border-slate-200/90 text-slate-800 border-l-4 border-l-slate-300 hover:bg-slate-50',
+        dotStyle: 'bg-slate-300 ring-4 ring-slate-100 text-slate-600',
+        badgeStyle: 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200',
+        badgeText: 'Pendente',
+        statusType: 'pending',
+        highlightText: null
+      };
+    }
+  };
 
   // Legacy alias para a seção Divisão
   const totalOrcado = totalGastoReal;
@@ -103,30 +144,98 @@ export default function DashboardView({ config, convidados, financeiro, planejam
             </div>
           </div>
 
-          {/* Contador Regressivo (Sonic Speed Countdown) */}
-          <div className="glass-card rounded-3xl p-5 shadow-md border border-slate-100">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1">
-              <Clock className="w-4 h-4 text-sonic-blue" />
-              Contagem Regressiva para a Aventura
-            </h3>
-            
-            <div className="grid grid-cols-4 gap-3 text-center">
-              {[
-                { label: 'Dias', value: timeLeft.dias, color: 'text-sonic-blue' },
-                { label: 'Horas', value: timeLeft.horas, color: 'text-tails-orange' },
-                { label: 'Min', value: timeLeft.minutos, color: 'text-ring-gold' },
-                { label: 'Seg', value: timeLeft.segundos, color: 'text-shoes-red' }
-              ].map((item, index) => (
-                <div key={index} className="bg-slate-50 rounded-2xl p-2.5 border border-slate-100">
-                  <div className={`text-2xl font-black ${item.color} tracking-tight`}>
-                    {String(item.value).padStart(2, '0')}
-                  </div>
-                  <div className="text-[10px] uppercase font-bold text-slate-500 mt-0.5">
-                    {item.label}
-                  </div>
+          {/* Roteiro da Festa - Timeline Linha do Tempo Sofisticada */}
+          <div className="glass-card rounded-3xl p-6 shadow-xl border border-slate-200/60 bg-white/90 backdrop-blur-md space-y-5">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-sonic-blue flex items-center justify-center shadow-sm">
+                  <Clock className="w-5 h-5" />
                 </div>
-              ))}
+                <div>
+                  <h3 className="text-sm font-black text-slate-800 tracking-tight">
+                    Roteiro da Festa
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-semibold">
+                    Cronograma de eventos em tempo real
+                  </p>
+                </div>
+              </div>
+
+              {/* Progress pill */}
+              <div className="flex items-center gap-2">
+                <div className="text-right">
+                  <span className="block text-[11px] font-black text-slate-800">
+                    {sortedRoteiro.filter(r => r.status === 'OK').length}/{sortedRoteiro.length}
+                  </span>
+                  <span className="block text-[8px] uppercase font-bold text-slate-400">
+                    Concluídos
+                  </span>
+                </div>
+                <div className="w-10 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                  <div
+                    className="h-full bg-emerald-500 transition-all duration-500"
+                    style={{
+                      width: sortedRoteiro.length > 0
+                        ? `${(sortedRoteiro.filter(r => r.status === 'OK').length / sortedRoteiro.length) * 100}%`
+                        : '0%'
+                    }}
+                  />
+                </div>
+              </div>
             </div>
+
+            {sortedRoteiro.length === 0 ? (
+              <div className="text-center py-8 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 space-y-1">
+                <p className="text-xs font-bold text-slate-500">Nenhum evento cadastrado</p>
+                <p className="text-[10px] text-slate-400">Cadastre o cronograma na aba Configurações</p>
+              </div>
+            ) : (
+              <div className="relative pl-3 space-y-4">
+                {/* Vertical Connector Line */}
+                <div className="absolute left-[21px] top-3 bottom-3 w-0.5 bg-gradient-to-b from-slate-200 via-slate-300 to-slate-100" />
+
+                {sortedRoteiro.map(item => {
+                  const style = getRoteiroItemStyle(item);
+                  return (
+                    <div key={item.id} className="relative flex items-start gap-4 group">
+                      {/* Timeline Node Dot */}
+                      <div className={`relative z-10 w-4 h-4 mt-3 rounded-full shrink-0 transition-transform ${style.dotStyle}`} />
+
+                      {/* Event Content Card */}
+                      <div className={`flex-1 p-3.5 rounded-2xl border transition-all duration-200 hover:-translate-y-0.5 ${style.cardStyle}`}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1 min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-black text-[11px] px-2 py-0.5 rounded-lg bg-slate-900/10 text-current border border-current/15 tracking-tight font-mono">
+                                ⏰ {item.hora_inicio}{item.hora_fim ? ` - ${item.hora_fim}` : ''}
+                              </span>
+                              <span className="font-extrabold text-sm tracking-tight text-slate-900 leading-snug">
+                                {item.evento}
+                              </span>
+                            </div>
+
+                            {style.highlightText && (
+                              <p className="text-[10px] font-extrabold tracking-wide mt-1 animate-pulse">
+                                {style.highlightText}
+                              </p>
+                            )}
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => onUpdateRoteiro && onUpdateRoteiro(item.id, { status: item.status === 'OK' ? 'Pendente' : 'OK' })}
+                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black transition-all border shrink-0 flex items-center gap-1.5 cursor-pointer active:scale-95 ${style.badgeStyle}`}
+                          >
+                            {style.badgeText}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 

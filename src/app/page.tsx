@@ -9,7 +9,7 @@ import ConfiguracaoView from '@/components/ConfiguracaoView';
 import LoginView from '@/components/LoginView';
 import ForcePasswordChangeView from '@/components/ForcePasswordChangeView';
 import RSVPView from '@/components/RSVPView';
-import { db, Convidado, FinanceiroItem, PlanejamentoItem, Usuario } from '@/utils/supabase';
+import { db, Convidado, FinanceiroItem, PlanejamentoItem, RoteiroItem, Usuario } from '@/utils/supabase';
 
 type Tab = 'dashboard' | 'convidados' | 'financeiro' | 'configuracao';
 
@@ -34,21 +34,24 @@ export default function HomePage() {
   const [convidados, setConvidados] = useState<Convidado[]>([]);
   const [financeiro, setFinanceiro] = useState<FinanceiroItem[]>([]);
   const [planejamento, setPlanejamento] = useState<PlanejamentoItem[]>([]);
+  const [roteiro, setRoteiro] = useState<RoteiroItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Load / Reload Data
   const loadAllData = useCallback(async () => {
     try {
-      const [configData, convidadosData, financeiroData, planejamentoData] = await Promise.all([
+      const [configData, convidadosData, financeiroData, planejamentoData, roteiroData] = await Promise.all([
         db.getConfig(),
         db.getConvidados(),
         db.getFinanceiro(),
-        db.getPlanejamento()
+        db.getPlanejamento(),
+        db.getRoteiro()
       ]);
       setConfig(configData);
       setConvidados(convidadosData);
       setFinanceiro(financeiroData);
       setPlanejamento(planejamentoData);
+      setRoteiro(roteiroData);
     } catch (err) {
       console.error('Erro ao recarregar dados:', err);
     }
@@ -136,6 +139,24 @@ export default function HomePage() {
   const handleDeleteFinanceiro = async (id: string) => {
     await db.deleteFinanceiro(id);
     setFinanceiro(prev => prev.filter(f => f.id !== id));
+  };
+
+  // Roteiro actions
+  const handleAddRoteiro = async (item: Partial<RoteiroItem>) => {
+    const added = await db.addRoteiroItem(item);
+    if (added) setRoteiro(prev => [...prev, added].sort((a, b) => a.hora_inicio.localeCompare(b.hora_inicio)));
+  };
+
+  const handleUpdateRoteiro = async (id: string, updates: Partial<RoteiroItem>) => {
+    const updated = await db.updateRoteiroItem(id, updates);
+    if (updated) {
+      setRoteiro(prev => prev.map(r => r.id === id ? updated : r).sort((a, b) => a.hora_inicio.localeCompare(b.hora_inicio)));
+    }
+  };
+
+  const handleDeleteRoteiro = async (id: string) => {
+    await db.deleteRoteiroItem(id);
+    setRoteiro(prev => prev.filter(r => r.id !== id));
   };
 
   const handleLoginSuccess = (user: Usuario) => {
@@ -289,6 +310,8 @@ export default function HomePage() {
               convidados={convidados} 
               financeiro={financeiro}
               planejamento={planejamento}
+              roteiro={roteiro}
+              onUpdateRoteiro={handleUpdateRoteiro}
             />
           )}
 
@@ -321,6 +344,10 @@ export default function HomePage() {
               config={config}
               onUpdateConfig={handleUpdateConfig}
               onLogout={handleLogout}
+              roteiro={roteiro}
+              onAddRoteiro={handleAddRoteiro}
+              onUpdateRoteiro={handleUpdateRoteiro}
+              onDeleteRoteiro={handleDeleteRoteiro}
             />
           )}
         </div>

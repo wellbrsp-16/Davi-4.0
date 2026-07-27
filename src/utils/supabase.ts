@@ -27,6 +27,15 @@ export type Convidado = {
   convite_enviado?: boolean;
 };
 
+export type RoteiroItem = {
+  id: string;
+  evento: string;
+  hora_inicio: string;
+  hora_fim?: string;
+  status: 'Pendente' | 'OK';
+  criado_em?: string;
+};
+
 export type PlanejamentoItem = {
   id: string;
   item: string;
@@ -293,6 +302,47 @@ class MockSupabaseService {
     let list = this.getFinanceiro();
     list = list.filter(f => f.id !== id);
     this.setStorageItem('mn_financeiro', list);
+  }
+
+  initialRoteiro: RoteiroItem[] = [
+    { id: '1', evento: 'Início churrasco', hora_inicio: '10:00', hora_fim: '12:00', status: 'OK' },
+    { id: '2', evento: 'Chegada Convidados', hora_inicio: '12:00', hora_fim: '14:00', status: 'OK' },
+    { id: '3', evento: 'Fim do churrasco', hora_inicio: '14:00', hora_fim: '15:00', status: 'Pendente' }
+  ];
+
+  getRoteiro() {
+    return this.getStorageItem('mn_roteiro', this.initialRoteiro);
+  }
+
+  addRoteiroItem(item: any) {
+    const list = this.getRoteiro();
+    const newItem = {
+      status: 'Pendente',
+      ...item,
+      id: Math.random().toString(36).substring(2, 9),
+      criado_em: new Date().toISOString()
+    };
+    list.push(newItem);
+    this.setStorageItem('mn_roteiro', list);
+    return newItem;
+  }
+
+  updateRoteiroItem(id: string, updates: any) {
+    const list = this.getRoteiro();
+    const index = list.findIndex((r: any) => r.id === id);
+    if (index !== -1) {
+      list[index] = { ...list[index], ...updates };
+      this.setStorageItem('mn_roteiro', list);
+      return list[index];
+    }
+    return null;
+  }
+
+  deleteRoteiroItem(id: string) {
+    let list = this.getRoteiro();
+    list = list.filter((r: any) => r.id !== id);
+    this.setStorageItem('mn_roteiro', list);
+    return true;
   }
 }
 
@@ -602,6 +652,69 @@ class DatabaseService {
       }
     }
     return mockDb.updateUserPassword(userId, newPasswordInput);
+  }
+
+  async getRoteiro(): Promise<RoteiroItem[]> {
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase
+          .from('roteiro_festa')
+          .select('*')
+          .order('hora_inicio', { ascending: true });
+        if (!error && data) return data;
+      } catch (err) {
+        console.error('Supabase getRoteiro error:', err);
+      }
+    }
+    return mockDb.getRoteiro();
+  }
+
+  async addRoteiroItem(item: Partial<RoteiroItem>): Promise<RoteiroItem> {
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase
+          .from('roteiro_festa')
+          .insert([item])
+          .select()
+          .single();
+        if (!error && data) return data;
+      } catch (err) {
+        console.error('Supabase addRoteiroItem error:', err);
+      }
+    }
+    return mockDb.addRoteiroItem(item);
+  }
+
+  async updateRoteiroItem(id: string, updates: Partial<RoteiroItem>): Promise<RoteiroItem | null> {
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase
+          .from('roteiro_festa')
+          .update(updates)
+          .eq('id', id)
+          .select()
+          .single();
+        if (!error && data) return data;
+      } catch (err) {
+        console.error('Supabase updateRoteiroItem error:', err);
+      }
+    }
+    return mockDb.updateRoteiroItem(id, updates);
+  }
+
+  async deleteRoteiroItem(id: string): Promise<boolean> {
+    if (isSupabaseConfigured) {
+      try {
+        const { error } = await supabase
+          .from('roteiro_festa')
+          .delete()
+          .eq('id', id);
+        if (!error) return true;
+      } catch (err) {
+        console.error('Supabase deleteRoteiroItem error:', err);
+      }
+    }
+    return mockDb.deleteRoteiroItem(id);
   }
 }
 
