@@ -171,7 +171,7 @@ class MockSupabaseService {
 
   getConvidadoById(id: string) {
     const list = this.getConvidados();
-    return list.find(c => c.id === id) || null;
+    return list.find(c => c.id === id || c.id.startsWith(id)) || null;
   }
 
   addConvidado(convidado: any) {
@@ -369,12 +369,14 @@ class DatabaseService {
           .eq('id', id)
           .maybeSingle();
 
-        // If not found and ID looks like a prefix, try ilike prefix match
-        if (!data && id.length < 36) {
+        // If not found and ID looks like a prefix, use a UUID range query to bypass Postgres UUID casting issues
+        const cleanId = id.replace(/[^a-fA-F0-9]/g, '');
+        if (!data && cleanId.length === 8) {
           const { data: prefixData, error: prefixError } = await supabase
             .from('convidados')
             .select('*')
-            .filter('id', 'ilike', `${id}%`);
+            .gte('id', `${cleanId}-0000-0000-0000-000000000000`)
+            .lte('id', `${cleanId}-ffff-ffff-ffff-ffffffffffff`);
 
           if (!prefixError && prefixData && prefixData.length > 0) {
             data = prefixData[0];
